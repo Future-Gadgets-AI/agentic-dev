@@ -1,0 +1,12 @@
+{
+  "name": "agentic-dev",
+  "version": "0.1.0",
+  "description": "Agentic development workflows with GitHub integration.",
+  "author": {
+    "name": "Lucas Brandão"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/lucasbrandao4770/agentic-dev",
+  "repository": "https://github.com/lucasbrandao4770/agentic-dev",
+  "keywords": ["github", "agentic", "workflow", "development", "git", "pull-request", "issue"]
+}
