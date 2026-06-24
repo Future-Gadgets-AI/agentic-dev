@@ -30,7 +30,7 @@ ALWAYS run, in this order:
 1. Guardrails above.
 2. `gh issue create --repo REPO --title "[TYPE] <title>" --body-file <draft.md>` → save the URL / number.
 3. **Canonical labels** (validated in step 4): `gh issue edit <n> --repo REPO --add-label "type:<x>,priority:<p>"`. Add `status:blocked` / `status:needs-decision` only when applicable.
-4. **Ownership = assignee** (when someone is actually going to work it), not a label: `gh issue edit <n> --repo REPO --add-assignee <user>` (`lucasbrandao4770` / `gustavomoura628`).
+4. **Ownership = assignee** (when someone is actually going to work it), not a label: `gh issue edit <n> --repo REPO --add-assignee <user>` (use the handles configured for your project — see `git-collaboration` for the convention).
 5. **Parent / sub-issue = GitHub native relationship**, never `Parent: #21` in the body. Use GitHub's sub-issue feature (in the UI, or `gh` sub-issue commands / the API where available) to attach a task/bug/spike under its parent feature or epic, or an ADR-implementing task under its ADR.
 
 ### ADRs specifically

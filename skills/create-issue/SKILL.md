@@ -34,7 +34,7 @@ Label scheme (`type:` · `priority:` · `status:`): see `git-collaboration`. Val
 1. **Pick the type** and confirm there's no duplicate on the board.
 2. **Copy the type's block** from `assets/issue-templates.md` and fill it in.
 3. **Self-containment pass** (rule 1) before saving.
-4. **Save the draft** to `notes/issues/<type>-<slug>.md` (slug = lowercase-with-hyphens, no internal labels).
+4. **Save the draft** to `notes/issues/<type>-<slug>.md` (slug = lowercase-with-hyphens, no internal labels). Create the directory first if it doesn't exist: `mkdir -p notes/issues`.
 5. **Publishing** is the `publish-issue` skill (it applies labels, native relationships, and the dedup/self-containment guardrails). A draft that's **not** going to GitHub yet — e.g. one the author still wants to review before taking it on publicly — **stays in the file only**. Publishing is an explicit decision by whoever owns the issue.
 
 If the capability needs an architecture decision, open an ADR (`create-adr`) and link it — **don't decide architecture inside a feature issue.**

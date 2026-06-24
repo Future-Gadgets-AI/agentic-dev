@@ -100,7 +100,7 @@ gh pr create \
   --base main
 ```
 
-Add `--draft` for work-in-progress. Optionally `--assignee` / `--reviewer <other-user>` (`lucasbrandao4770` / `gustavomoura628`) to route it to the other person.
+Add `--draft` for work-in-progress. Optionally `--assignee` / `--reviewer <other-user>` (use the handles configured for your project — see `git-collaboration` for the convention) to route it to the other person.
 
 ## Quality checklist
 

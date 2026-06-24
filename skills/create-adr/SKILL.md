@@ -23,7 +23,7 @@ An ADR is for a decision that is **architecturally significant and expensive to 
 - **Consequences** — trade-offs on **both sides**: what gets easier (positive) **and** what gets harder / riskier (negative). A consequence with only upside is a sales pitch, not a decision record.
 
 ### 2. Fill in the template
-Copy `assets/adr-template.md`, fill in the sections, and save to **`notes/adr/adr-<slug>.md`** — `slug` is a verb-phrase in lowercase-with-hyphens (`enforce-input-validation`, not `team-thing-v2`). Draft only — the push to GitHub is a separate flow.
+Copy `assets/adr-template.md`, fill in the sections, and save to **`notes/adr/adr-<slug>.md`** — `slug` is a verb-phrase in lowercase-with-hyphens (`enforce-input-validation`, not `team-thing-v2`). Create the directory first if it doesn't exist: `mkdir -p notes/adr`. Draft only — the push to GitHub is a separate flow.
 
 Content rules:
 - **Self-contained — zero leaked context.** The ADR goes to GitHub and must be readable, on its own, by the **other person's agent**. Do a **translation/cleaning pass** that removes: local file paths, private session state ("as we discussed"), internal nicknames/codenames, references to your own numbered notes, and process/tooling meta. At most, reference **other GitHub ADRs** — never personal workspace files. Translate any internal shorthand into self-contained language.

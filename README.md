@@ -25,7 +25,7 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 ## Prerequisites
 
 - **GitHub CLI (`gh`)**, authenticated — every GitHub operation runs through it.
-- **AgentSpec plugin** — `a2a-workflow` (and `fix-bug`, which wraps it) delegate the *implement* step to `agentspec:sdd-workflow` and `the-planner`. The standalone building-block skills above work **without** it.
+- **AgentSpec plugin** (preferred, not required) — when installed, `a2a-workflow` uses `agentspec:sdd-workflow` as the implement engine (P5) and `agentspec:architect:the-planner` for P1 analysis, giving richer multi-phase SDD workflows. Without it, the plugin falls back to the bundled `agents/the-planner.md` (drives both P1 analysis and P5 planning) and `agents/codebase-explorer.md` (recon). All standalone building-block skills (`create-issue`, `publish-issue`, etc.) work without AgentSpec regardless.
 
 ## Installation
 
@@ -37,7 +37,13 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 ## Usage
 
 - **Quick GitHub action:** `/agentic-dev:create-pr`, `/agentic-dev:create-issue`, etc. — invoke the building block you need.
-- **Full bug flow:** `/agentic-dev:fix-bug <description>` — runs the gated issue → PR engine end to end (requires AgentSpec).
+- **Full bug flow:** `/agentic-dev:fix-bug <description>` — runs the gated issue → PR engine end to end (richer with AgentSpec; falls back to the bundled agents without it).
+
+## Credits
+
+The `the-planner` agent is adapted (and trimmed for this plugin) from the upstream [the-planner.md](https://github.com/luanmorenommaciel/agentspec/blob/main/.claude/agents/architect/the-planner.md) in the AgentSpec project.
+
+The `codebase-explorer` agent is adapted (and trimmed for this plugin) from the upstream [codebase-explorer.md](https://github.com/luanmorenommaciel/agentspec/blob/main/.claude/agents/dev/codebase-explorer.md) in the AgentSpec project.
 
 ## License
 
