@@ -114,7 +114,7 @@ Add `--draft` for work-in-progress, and capture the new PR number for the next s
 
 ## Step 7 — Request BOTH reviewers (one request each)
 
-Every PR must end up with **both** configured reviewers (`AGENTIC_REVIEWERS`, currently `lucasbrandao4770 gustavomoura628`). **Don't hand-roll this:** a single call listing several reviewers reliably attaches only **one** (a `gh` multi-reviewer bug + REST batching race — cli/cli #954, #7463), and the obvious `for r in $AGENTIC_REVIEWERS` loop **silently breaks in zsh** (no word-splitting → one bogus reviewer). Use the bundled script — it requests each reviewer alone in bash, **skips anyone already auto-requested by CODEOWNERS**, spaces the calls, and exits non-zero if a configured reviewer didn't attach:
+Every PR must end up with the **configured reviewers** (`AGENTIC_REVIEWERS`). **Don't hand-roll this:** a single call listing several reviewers reliably attaches only **one** (a `gh` multi-reviewer bug + REST batching race — cli/cli #954, #7463), and the obvious `for r in $AGENTIC_REVIEWERS` loop **silently breaks in zsh** (no word-splitting → one bogus reviewer). Use the bundled script — it requests each reviewer alone in bash, **skips anyone already auto-requested by CODEOWNERS**, spaces the calls, and exits non-zero if a configured reviewer didn't attach:
 
 ```bash
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)

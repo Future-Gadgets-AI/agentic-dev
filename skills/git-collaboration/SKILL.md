@@ -145,12 +145,11 @@ gh repo view --json nameWithOwner -q .nameWithOwner   # preferred
 git remote get-url origin                             # fallback
 ```
 
-## The two developers
+## The roles
 
-GitHub handles for this project's collaboration:
+A two-human + one-bot collaboration. The actual GitHub accounts are **configured per install** (in the bot credentials file written by `init` / `setup-bot.sh`), never hardcoded here:
 
-- Primary developer — GitHub `lucasbrandao4770`
-- Collaborator — GitHub `gustavomoura628`
-- Machine account (autonomous author) — GitHub `komiko-bot`
+- **Human maintainers** — the people who review and merge; their logins are the `AGENTIC_REVIEWERS` pair. Use them for `--assignee` and for @-mentions when a decision needs a person.
+- **Machine account (autonomous author)** — the bot identity that authors writes, stored as `GITHUB_LOGIN`.
 
-Both human handles are requested as **reviewers** on every PR (`create-pr`): the bot authors, the humans review and merge. Use the human handles for `--assignee` and for @-mentions when a decision needs a person. The reviewer pair is the single value `AGENTIC_REVIEWERS` in the bot credentials file — edit it there to change the pair (see **Bot identity** above).
+The bot authors; the human maintainers review and merge. To change who's involved, edit the credentials file (see **Bot identity** above) — nothing here is tied to specific people.

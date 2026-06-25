@@ -32,8 +32,8 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 ## Installation
 
 ```text
-/plugin marketplace add lucasbrandao4770/lucasbrandao-cc-plugins
-/plugin install agentic-dev@lucasbrandao-cc-plugins
+/plugin marketplace add Future-Gadgets-AI/cc-plugins
+/plugin install agentic-dev@cc-plugins
 ```
 
 ## Bot identity & setup
