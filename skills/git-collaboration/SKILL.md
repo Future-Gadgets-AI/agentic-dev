@@ -147,9 +147,9 @@ git remote get-url origin                             # fallback
 
 ## The roles
 
-A two-human + one-bot collaboration. The actual GitHub accounts are **configured per install** (in the bot credentials file written by `init` / `setup-bot.sh`), never hardcoded here:
+A collaboration between human maintainers and a bot. The actual GitHub accounts are **configured per install** (in the bot credentials file written by `init` / `setup-bot.sh`), never hardcoded here:
 
-- **Human maintainers** — the people who review and merge; their logins are the `AGENTIC_REVIEWERS` pair. Use them for `--assignee` and for @-mentions when a decision needs a person.
+- **Human maintainers** — the people who review and merge; their logins are in `AGENTIC_REVIEWERS`. Use them for `--assignee` and for @-mentions when a decision needs a person.
 - **Machine account (autonomous author)** — the bot identity that authors writes, stored as `GITHUB_LOGIN`.
 
 The bot authors; the human maintainers review and merge. To change who's involved, edit the credentials file (see **Bot identity** above) — nothing here is tied to specific people.
