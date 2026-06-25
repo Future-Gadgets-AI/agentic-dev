@@ -73,6 +73,8 @@ It resolves the bot token, **verifies the token actually belongs to the expected
 
 **Fail-fast, no fallback.** If the bot can't be assumed — missing credentials, or the token resolves to the wrong account — the helper prints an actionable error and returns non-zero, and the skill **stops**. It must **never** fall back to a personal `gh` account. Acting as the wrong identity is the precise failure this guards against, so there is no "degrade gracefully" path here by design.
 
+**Defense in depth (the hook).** A `PreToolUse` hook (`hooks/`) backstops a forgotten `source`: it denies any git/gh **write to the bot's org** that isn't routed through `bot-auth`. Two things to understand about its scope: it governs **only commands Claude Code runs through its Bash tool** — your own terminal, GitHub Desktop, IDE git, and CI are never touched — and it fails *open* on ambiguity (it's a backstop, not the primary mechanism). `gh pr review` is exempt; append `# agentic:allow-ambient` to a command for a deliberate non-bot write.
+
 **One-time setup** (stores the PAT outside any repo, chmod 600):
 
 ```bash
