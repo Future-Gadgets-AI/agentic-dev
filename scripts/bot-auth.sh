@@ -40,8 +40,13 @@ __bot_auth() {
     unset GH_TOKEN; return 1
   fi
 
-  # Identity guardrail: the token MUST resolve to the expected bot, or we stop.
-  local expected="${GITHUB_LOGIN:-komiko-bot}" actual
+  # Identity guardrail: the token MUST resolve to the configured bot, or we stop.
+  local expected="${GITHUB_LOGIN:-}" actual
+  if [ -z "$expected" ]; then
+    echo "bot-auth: GITHUB_LOGIN is not set — run scripts/setup-bot.sh to configure the bot identity." >&2
+    echo "  Refusing to act without a verified expected account (fail-fast)." >&2
+    unset GH_TOKEN; return 1
+  fi
   if ! actual="$(gh api user --jq .login 2>/dev/null)"; then
     echo "bot-auth: identity check failed (gh api user). PAT invalid, expired, or 403?" >&2
     unset GH_TOKEN; return 1
@@ -63,7 +68,7 @@ __bot_auth() {
   export GIT_COMMITTER_NAME="$name" GIT_COMMITTER_EMAIL="$email"
 
   # Single source of truth for PR reviewers (override in the credentials file).
-  export AGENTIC_REVIEWERS="${AGENTIC_REVIEWERS:-lucasbrandao4770 gustavomoura628}"
+  export AGENTIC_REVIEWERS="${AGENTIC_REVIEWERS:-}"
 
   echo "bot-auth: acting as ${actual} ✓ (commits -> ${name} <${email}>)"
   return 0

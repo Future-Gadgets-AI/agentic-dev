@@ -27,7 +27,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 source "$HERE/bot-auth.sh" || exit 1
 
 REVIEWERS="${AGENTIC_REVIEWERS:-}"
-[ -n "$REVIEWERS" ] || { echo "request-reviewers: AGENTIC_REVIEWERS is empty." >&2; exit 1; }
+[ -n "$REVIEWERS" ] || { echo "request-reviewers: no AGENTIC_REVIEWERS configured — relying on CODEOWNERS for review requests." >&2; exit 0; }
 
 # Reviewers already on the PR (e.g. CODEOWNERS auto-requests on open).
 already="$(gh pr view "$PR" --repo "$REPO" --json reviewRequests --jq '[.reviewRequests[].login]|join(" ")' 2>/dev/null || echo "")"

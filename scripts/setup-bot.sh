@@ -4,7 +4,7 @@
 # (chmod 600, outside any repo) for bot-auth.sh to consume. Never prints the token.
 #
 # Usage:
-#   scripts/setup-bot.sh --from-env ~/path/to/.env [--login komiko-bot] \
+#   scripts/setup-bot.sh --from-env ~/path/to/.env [--login <bot-login>] \
 #                        [--probe-repo Future-Gadgets-AI/agentic-dev]
 #   scripts/setup-bot.sh --token <PAT> [--login ...] [--probe-repo ...]
 #   GITHUB_PAT=... scripts/setup-bot.sh
@@ -14,9 +14,9 @@ set -euo pipefail
 
 CONFIG_DIR="${AGENTIC_DEV_CONFIG_DIR:-$HOME/.config/agentic-dev}"
 CONFIG_FILE="$CONFIG_DIR/credentials"
-EXPECT_LOGIN="komiko-bot"
+EXPECT_LOGIN=""
 PROBE_REPO=""
-REVIEWERS="${AGENTIC_REVIEWERS:-lucasbrandao4770 gustavomoura628}"
+REVIEWERS="${AGENTIC_REVIEWERS:-}"
 TOKEN="${GITHUB_PAT:-}"
 
 while [ $# -gt 0 ]; do
@@ -49,7 +49,7 @@ if ! login="$(GH_TOKEN="$TOKEN" gh api user --jq .login 2>/dev/null)"; then
   exit 1
 fi
 uid="$(GH_TOKEN="$TOKEN" gh api user --jq .id 2>/dev/null)" || uid=""
-if [ "$login" != "$EXPECT_LOGIN" ]; then
+if [ -n "$EXPECT_LOGIN" ] && [ "$login" != "$EXPECT_LOGIN" ]; then
   echo "setup: token resolves to '$login', but expected '$EXPECT_LOGIN'." >&2
   echo "  If '$login' is correct, re-run with: --login '$login'." >&2
   echo "  Otherwise you likely copied the wrong account's PAT." >&2
