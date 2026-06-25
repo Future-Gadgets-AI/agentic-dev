@@ -114,21 +114,14 @@ Add `--draft` for work-in-progress, and capture the new PR number for the next s
 
 ## Step 7 — Request BOTH reviewers (one request each)
 
-Every PR requests **both** configured reviewers — `$AGENTIC_REVIEWERS` (exported by the auth helper; currently `lucasbrandao4770 gustavomoura628`). A single call listing several reviewers reliably attaches only **one** (a `gh` multi-reviewer bug + secondary-rate-limit racing on the batched REST call), so request them **one at a time** via the REST endpoint, space the calls, then read back and surface any miss:
+Every PR must end up with **both** configured reviewers (`AGENTIC_REVIEWERS`, currently `lucasbrandao4770 gustavomoura628`). **Don't hand-roll this:** a single call listing several reviewers reliably attaches only **one** (a `gh` multi-reviewer bug + REST batching race — cli/cli #954, #7463), and the obvious `for r in $AGENTIC_REVIEWERS` loop **silently breaks in zsh** (no word-splitting → one bogus reviewer). Use the bundled script — it requests each reviewer alone in bash, **skips anyone already auto-requested by CODEOWNERS**, spaces the calls, and exits non-zero if a configured reviewer didn't attach:
 
 ```bash
-source "${CLAUDE_PLUGIN_ROOT}/scripts/bot-auth.sh" || exit 1
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-PR=<new PR number>
-for r in $AGENTIC_REVIEWERS; do
-  gh api -X POST "repos/$REPO/pulls/$PR/requested_reviewers" -f "reviewers[]=$r" >/dev/null \
-    || echo "WARN: could not request $r"
-  sleep 1   # space the calls — batching/rapid-fire silently drops reviewers
-done
-got=$(gh pr view "$PR" --repo "$REPO" --json reviewRequests --jq '[.reviewRequests[].login]|sort|join(" ")')
-echo "requested: $AGENTIC_REVIEWERS"
-echo "attached:  $got"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/request-reviewers.sh" "$REPO" <new PR number>
 ```
+
+The script self-sources `bot-auth.sh` (so it acts as the bot) and reads `AGENTIC_REVIEWERS`.
 
 A reviewer attaches only if they already have **repo access** (org team / collaborator) — the call 422s otherwise. If the read-back is missing someone, **say so**; don't quietly ship a half-reviewed PR. (`reviewers[]` takes user logins; teams use a separate `team_reviewers[]` field.)
 
