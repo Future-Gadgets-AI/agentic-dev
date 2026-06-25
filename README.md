@@ -22,6 +22,8 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 | `/agentic-dev:a2a-workflow` | End-to-end issue → PR engine: understand → clarify → issue → branch → implement → verify → PR → blind-review, with four quality gates |
 | `/agentic-dev:fix-bug` | Thin wrapper that drives a bug through `a2a-workflow` |
 
+**Setup:** `/agentic-dev:init` — guided one-time bot-credential onboarding (create or wire the token, verify, store). See **Bot identity & setup** below.
+
 ## Prerequisites
 
 - **GitHub CLI (`gh`)**, authenticated — the transport for every GitHub operation. Note: **write** operations run as a configured *bot account*, not your personal login — see **Bot identity & setup** below.
@@ -37,6 +39,8 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 ## Bot identity & setup
 
 Every GitHub **write** (issues, PRs, comments, commits, pushes) is attributed to a configured **machine account**, not your personal `gh` login — so autonomous work shows up as the bot. This is **mandatory and fail-fast**: the write skills stop with an error if the bot can't be assumed; they never fall back to your personal account. (`review-pr` is the exception — a review is your own act and uses your `gh` identity.)
+
+**The easy way — `/agentic-dev:init`:** run it and it walks you through creating or wiring the bot's token (catching the common resource-owner and permission traps), verifies it works, and stores it. The manual steps below are what it automates.
 
 One-time setup stores the bot's fine-grained PAT outside any repo (`~/.config/agentic-dev/credentials`, chmod 600):
 
