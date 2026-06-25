@@ -59,6 +59,29 @@ A PR is the author agent's message to the reviewer agent:
 
 > **Reviewer caution.** Both agents may be the *same model*, so they can share blind spots. The reviewer defaults to **skepticism** and requires **evidence** (tests pass, acceptance criteria met) before approving. Never rubber-stamp.
 
+## Bot identity — the action skills run as the machine account
+
+Every GitHub **write** in the action skills runs as one configured **bot account**, never a personal `gh` login — autonomous work is attributed to the bot. This covers `publish-issue`, `create-pr`, the P7 blind-review comment, and the branch/commit/push steps `a2a-workflow` drives. (`review-pr` is the exception: it's the *counterparty's* review and runs as the reviewer's own identity.)
+
+**Single source of truth.** At the top of every git/gh write block, the skill sources one helper:
+
+```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/bot-auth.sh" || exit 1
+```
+
+It resolves the bot token, **verifies the token actually belongs to the expected bot**, and — for that shell only — exports `GH_TOKEN` (so `gh` *and* `git push` act as the bot), ephemeral `GIT_AUTHOR_*`/`GIT_COMMITTER_*` (so commits are authored by the bot *without* writing the identity into the repo's git config), and `AGENTIC_REVIEWERS`.
+
+**Fail-fast, no fallback.** If the bot can't be assumed — missing credentials, or the token resolves to the wrong account — the helper prints an actionable error and returns non-zero, and the skill **stops**. It must **never** fall back to a personal `gh` account. Acting as the wrong identity is the precise failure this guards against, so there is no "degrade gracefully" path here by design.
+
+**One-time setup** (stores the PAT outside any repo, chmod 600):
+
+```bash
+scripts/setup-bot.sh --from-env <path/to/.env with GITHUB_PAT=...> \
+  --login <bot-login> --probe-repo <org>/<repo>
+```
+
+Setup verifies the token is the bot and probes the fine-grained-PAT gotcha — a token can pass `gh api user` yet **403** on push/PR if it lacks org resource-owner approval + Contents / Pull requests / Issues write. Config keys (env vars, or the credentials file): `GITHUB_PAT` (required) · `GITHUB_LOGIN` (expected account) · `GITHUB_NAME`/`GITHUB_EMAIL` (commit identity; derived if absent) · `AGENTIC_REVIEWERS`. **Never** echo the token or commit the credentials file.
+
 ## Gitflow — simple: main + short-lived feature branches
 
 - **`main`** is the only long-lived branch. It is always releasable.
@@ -122,9 +145,10 @@ git remote get-url origin                             # fallback
 
 ## The two developers
 
-Configure the GitHub handles for your collaboration pair in your project's `CLAUDE.md` or equivalent. Replace the placeholders below with the actual handles for your project:
+GitHub handles for this project's collaboration:
 
-- Primary developer — GitHub `<your-handle>`
-- Collaborator — GitHub `<collaborator-handle>`
+- Primary developer — GitHub `lucasbrandao4770`
+- Collaborator — GitHub `gustavomoura628`
+- Machine account (autonomous author) — GitHub `komiko-bot`
 
-Use these handles for `--assignee` and for @-mentions when a decision needs the other person.
+Both human handles are requested as **reviewers** on every PR (`create-pr`): the bot authors, the humans review and merge. Use the human handles for `--assignee` and for @-mentions when a decision needs a person. The reviewer pair is the single value `AGENTIC_REVIEWERS` in the bot credentials file — edit it there to change the pair (see **Bot identity** above).

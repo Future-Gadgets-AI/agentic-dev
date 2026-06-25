@@ -27,6 +27,12 @@ ALWAYS run, in this order:
 
 ## Publish — flow
 
+**First, act as the bot.** In the shell that runs the `gh` *writes* in this skill — `issue create` / `edit` / `close` (here and in **Curate** below) and the human-approved `label create` — source the auth helper so they're attributed to the machine account:
+```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/bot-auth.sh" || exit 1
+```
+**Fail-fast:** if it can't assume the bot, **STOP** — never publish or curate under a personal account. (The dedup / `gh label list` *reads* in the guardrails don't need it.) See `git-collaboration` → **Bot identity**.
+
 1. Guardrails above.
 2. `gh issue create --repo REPO --title "[TYPE] <title>" --body-file <draft.md>` → save the URL / number.
 3. **Canonical labels** (validated in step 4): `gh issue edit <n> --repo REPO --add-label "type:<x>,priority:<p>"`. Add `status:blocked` / `status:needs-decision` only when applicable.

@@ -13,7 +13,7 @@ This is **not** "push earlier." It's *phase-by-phase* delivery — each artifact
 | Each implementation chunk | passes G2 (verify) → **commit + push** that chunk. |
 | PR drafted | **review it** → publish when satisfied (`create-pr`). |
 | PR published | spawn the **blind-review** pass → it comments on the PR. |
-| Done | add the other dev as reviewer → final report. |
+| Done | request **both** reviewers (`create-pr` Step 7) → final report. |
 
 ## Why
 
@@ -25,4 +25,4 @@ This is **not** "push earlier." It's *phase-by-phase* delivery — each artifact
 
 - ❌ Do all the work locally (issue + branch + commits + PR) and push everything at the very end.
 - ❌ Push a branch full of unverified chunks "to save time" — each pushed chunk should have passed G2.
-- ✅ Issue published when ready · branch pushed at creation · each verified chunk pushed · PR published when ready · blind-review posted · reviewer added.
+- ✅ Issue published when ready · branch pushed at creation · each verified chunk pushed · PR published when ready · blind-review posted · both reviewers requested.
