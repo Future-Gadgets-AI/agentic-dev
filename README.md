@@ -24,7 +24,7 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 
 ## Prerequisites
 
-- **GitHub CLI (`gh`)**, authenticated — every GitHub operation runs through it.
+- **GitHub CLI (`gh`)**, authenticated — the transport for every GitHub operation. Note: **write** operations run as a configured *bot account*, not your personal login — see **Bot identity & setup** below.
 - **AgentSpec plugin** (preferred, not required) — when installed, `a2a-workflow` uses `agentspec:sdd-workflow` as the implement engine (P5) and `agentspec:architect:the-planner` for P1 analysis, giving richer multi-phase SDD workflows. Without it, the plugin falls back to the bundled `agents/the-planner.md` (drives both P1 analysis and P5 planning) and `agents/codebase-explorer.md` (recon). All standalone building-block skills (`create-issue`, `publish-issue`, etc.) work without AgentSpec regardless.
 
 ## Installation
@@ -33,6 +33,21 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 /plugin marketplace add lucasbrandao4770/lucasbrandao-cc-plugins
 /plugin install agentic-dev@lucasbrandao-cc-plugins
 ```
+
+## Bot identity & setup
+
+Every GitHub **write** (issues, PRs, comments, commits, pushes) is attributed to a configured **machine account**, not your personal `gh` login — so autonomous work shows up as the bot. This is **mandatory and fail-fast**: the write skills stop with an error if the bot can't be assumed; they never fall back to your personal account. (`review-pr` is the exception — a review is your own act and uses your `gh` identity.)
+
+One-time setup stores the bot's fine-grained PAT outside any repo (`~/.config/agentic-dev/credentials`, chmod 600):
+
+```bash
+${CLAUDE_PLUGIN_ROOT}/scripts/setup-bot.sh \
+  --from-env <path/to/.env with GITHUB_PAT=...> \
+  --login <bot-login> \
+  --probe-repo <org>/<repo>
+```
+
+The PAT must be **fine-grained** with **Resource owner = your org** (approved by an org owner if required) and **Contents + Pull requests + Issues = write** — otherwise `gh api user` succeeds but push/PR calls 403. Setup verifies the token resolves to the bot and probes those permissions. The reviewer pair requested on every PR is configurable via `AGENTIC_REVIEWERS`. Full protocol: `git-collaboration` → **Bot identity**.
 
 ## Usage
 

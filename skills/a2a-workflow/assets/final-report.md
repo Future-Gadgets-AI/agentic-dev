@@ -11,7 +11,7 @@ The run's closing artifact. It exists so the human can merge **fast and well-inf
 |---|---|
 | Issue   | #N — <labels> |
 | Branch  | <name> (pushed) |
-| PR      | #M — <draft? · assignees · reviewer> |
+| PR      | #M — <draft? · assignees · reviewers> |
 
 **What changed:** <2–3 lines>
 

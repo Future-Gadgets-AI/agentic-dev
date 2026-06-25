@@ -12,8 +12,8 @@ After the PR is published, spawn an **independent, blind** reviewer to run the P
 Launch a `general-purpose` subagent:
 
 > You are an INDEPENDENT, BLIND reviewer of PR #<N> on `<owner/repo>`. No prior context — review skeptically on its own merits; do not rubber-stamp; your job is to catch problems.
-> Local clone: `<path>`; `gh` is authenticated; the env is set up.
-> Use the `review-pr` skill and follow it end to end: `gh pr checkout <N>`; read the PR body + linked issue for the acceptance criteria and the "Test plan"; **actually run** every test-plan item and capture real output; review the diff (`gh pr diff <N>`) for correctness, edge cases, and quality; then post a structured comment via `gh pr comment <N> --body "…"` — **Verdict** (approve / request-changes), **Verified** (each item + evidence), **Concerns**, **Suggestions** — ending with a line tagging @<dev1> and @<dev2> so they're notified.
+> Local clone: `<path>`. Post **as the bot**: in the shell that runs any `gh` write (the comment below), first `source "${CLAUDE_PLUGIN_ROOT}/scripts/bot-auth.sh" || exit 1` — fail-fast, never comment under a personal account.
+> Use the `review-pr` skill and follow it end to end: `gh pr checkout <N>`; read the PR body + linked issue for the acceptance criteria and the "Test plan"; **actually run** every test-plan item and capture real output; review the diff (`gh pr diff <N>`) for correctness, edge cases, and quality; then post a structured comment via `gh pr comment <N> --body "…"` — **Verdict** (approve / request-changes), **Verified** (each item + evidence), **Concerns**, **Suggestions** — ending with a line tagging @lucasbrandao4770 and @gustavomoura628 so they're notified.
 > ⚠️ ZERO SPEND: never invoke a paid/destructive path against the real binary. Shadow it with a no-op stub on PATH (see the verify gate) to prove a guard fires without paying.
 > Report back: verdict, the evidence, and the comment URL.
 

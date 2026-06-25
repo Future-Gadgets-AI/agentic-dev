@@ -9,6 +9,8 @@ The protocol for reviewing the **other person's** PR. A PR is an A2A message: th
 
 > **Default to skepticism.** Approve only on **evidence**: the tests pass *and* the acceptance criteria are met. The author's agent and yours may be the **same model** — so you can share blind spots. A clean-looking diff is not proof. Run the code; check the claims. The **human does the final merge** — you recommend, you do not merge.
 
+> **Identity.** `review-pr` posts as **your own** GitHub account (the reviewer) — it does *not* assume the bot and has no `bot-auth` step, because a review is the counterparty's act, not the author's. (The bot's *automated* first-pass — P7 blind-review — does post as the bot; see `a2a-workflow` → `assets/blind-review.md`.)
+
 ## Detect the repo first (never hardcode)
 
 ```bash
