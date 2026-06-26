@@ -78,7 +78,7 @@ It resolves the bot token, **verifies the token actually belongs to the expected
 **One-time setup** (stores the PAT outside any repo, chmod 600):
 
 ```bash
-scripts/setup-bot.sh --from-env <path/to/.env with GITHUB_PAT=...> \
+${CLAUDE_PLUGIN_ROOT}/scripts/setup-bot.sh --from-env <path/to/.env with GITHUB_PAT=...> \
   --login <bot-login> --probe-repo <org>/<repo>
 ```
 

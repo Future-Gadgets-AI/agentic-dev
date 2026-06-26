@@ -31,7 +31,7 @@ Deliver each artifact **as its phase completes** — never hoard everything to t
 - **◆G1 · CLARIFICATION GATE** — classify each open question STOP / ASSUME / SPLIT by reversibility × blast-radius (`assets/clarification-gate.md`). A healthy run fires **0–1** blocking questions; >2 ⇒ the request is underspecified — say so.
 - **P2 · DRAFT ISSUE** (+ ADR iff architecturally significant) — `create-issue` / `create-adr`. Persist the expansion output as `## Scope & interpretation`. **Review it for quality, then publish** when satisfied.
 - **P3 · PUBLISH** — `publish-issue` (dedup, self-containment lint, label validation against the **live repo** — reconciled to the kb scheme — with the HITL no-auto-create rule, native sub-issues, assignee for ownership).
-- **P4 · BRANCH** — `<type>/<slug>` (`fix/…`, `feat/…`), never `main`. **Push the branch immediately** (as the bot — `source scripts/bot-auth.sh` at the top of the block) — nothing to review, and it makes the work visible.
+- **P4 · BRANCH** — `<type>/<slug>` (`fix/…`, `feat/…`), never `main`. **Push the branch immediately** (as the bot — `source ${CLAUDE_PLUGIN_ROOT}/scripts/bot-auth.sh` at the top of the block) — nothing to review, and it makes the work visible.
 - **P5 · IMPLEMENT** — `agentspec:sdd-workflow` as the preferred engine (requires AgentSpec plugin); fallback when AgentSpec is not installed: bundled `agents/the-planner.md` for planning + bundled `agents/codebase-explorer.md` for recon + read-only subagents. Work in **chunks**; after each chunk that passes G2, **commit (conventional) + push**.
 - **◆G2 · VERIFY / SMOKE GATE** — run the tests **and** a real smoke of the changed path; demonstrate the specific behavior. No "done" without it (`assets/verify-gate.md`). Includes the **shadow trick** for paid/destructive paths (prove the guard fires with zero spend).
 - **P6 · PR** — draft → self-review → publish via `create-pr` (structured body; **links the issue/ADR** — mandatory).
@@ -59,7 +59,7 @@ Default for headless until trust is earned: **draft PR always**.
 
 ## Guardrails
 
-- **Run as the bot.** Every GitHub write this engine drives — branch, commit, push (P4–P6), the issue/PR (via `publish-issue` / `create-pr`), and the P7 blind-review comment — is attributed to the configured machine account: source `scripts/bot-auth.sh` at the top of each write block, **fail-fast** if it can't assume the bot, and **never** fall back to a personal `gh` login (`git-collaboration` → **Bot identity**). `review-pr` (the human's own review) is the lone exception.
+- **Run as the bot.** Every GitHub write this engine drives — branch, commit, push (P4–P6), the issue/PR (via `publish-issue` / `create-pr`), and the P7 blind-review comment — is attributed to the configured machine account: source `${CLAUDE_PLUGIN_ROOT}/scripts/bot-auth.sh` at the top of each write block, **fail-fast** if it can't assume the bot, and **never** fall back to a personal `gh` login (`git-collaboration` → **Bot identity**). `review-pr` (the human's own review) is the lone exception.
 - **Orchestrate, don't re-implement.** If you're writing `gh issue create` by hand, you've skipped `publish-issue`. Call the owning skill.
 - **No "done" without G2 evidence.** A `Smoke evidence:` transcript is required in the report; a blocked smoke ⇒ draft PR + `## Verification: BLOCKED`.
 - **Never invoke a paid/destructive path to "test" it.** Use the shadow trick (`assets/verify-gate.md`).
