@@ -1,6 +1,6 @@
 # CLAUDE.md — developing the agentic-dev plugin
 
-> **This file is for developing the plugin itself — it is NOT a distributed plugin component.** Claude Code does not load a plugin's `CLAUDE.md` into a consumer's session; it applies only when working *inside this repo*. Consumer-facing surface = `README.md` + `ARCHITECTURE.md` + the `skills/` · `agents/` · `commands/` · `contracts/`. Keep the separation: **dev guidance here; product there.**
+> **This file is for developing the plugin itself — it is NOT a distributed plugin component.** Claude Code does not load a plugin's `CLAUDE.md` into a consumer's session; it applies only when working *inside this repo*. Consumer-facing surface = `README.md` + `ARCHITECTURE.md` + the `plugin/skills/` · `plugin/agents/` · `plugin/commands/` · `plugin/contracts/`. Keep the separation: **dev guidance here; product there.**
 
 ## What this is
 `agentic-dev` is a Claude Code plugin that runs a **lights-out ("dark factory") development workflow** — turn a GitHub issue into a verified, review-ready PR, with AI agents doing the line work and humans at the boundary (authoring + approving). **Read `ARCHITECTURE.md` first** — it's the design-of-record.
@@ -13,7 +13,7 @@
 ## Canonical sources — point at these, don't duplicate
 - **`ARCHITECTURE.md`** — how the system works *now*.
 - **ADRs** — *why* (decision history), published as `type:adr` issues on the repo.
-- **`contracts/`** — canonical machine-loadable rules: `lifecycle.md` (issue state machine), `dor-rubric.md` (Definition-of-Ready gate), `labels.md` (label scheme).
+- **`plugin/contracts/`** — canonical machine-loadable rules: `lifecycle.md` (issue state machine), `dor-rubric.md` (Definition-of-Ready gate), `labels.md` (label scheme).
 
 ## How we work in this repo (dogfood the workflow)
 1. **Work from an issue** (the spec). No issue → author one first (`/create-issue`, `/create-adr`).
@@ -25,10 +25,10 @@
 7. **The human merges. Always.**
 
 ## Conventions
-- **GitHub writes run as the bot** (`source scripts/bot-auth.sh` → komiko-bot); fail-fast, never a personal account. Reviewers come from `AGENTIC_REVIEWERS`.
+- **GitHub writes run as the bot** (`source plugin/scripts/bot-auth.sh` → komiko-bot); fail-fast, never a personal account. Reviewers come from `AGENTIC_REVIEWERS`.
 - **Conventional commits**; end with the Claude co-author trailer.
 - **Component taxonomy** (ADR-0005): `commands/` = entrypoints/orchestration · `skills/` = capabilities (loadable) · `agents/` = roles (single-responsibility, body ≈ a system prompt) · `contracts/` = canonical rules. **Pick by role, not by folder.**
-- **Labels**: validate against the live repo before applying; **never auto-create** (scheme = `contracts/labels.md`).
+- **Labels**: validate against the live repo before applying; **never auto-create** (scheme = `plugin/contracts/labels.md`).
 - **Enforcement honesty**: the gates are *prompt-honored forcing functions*, not hook-enforced. Never call them "enforced" until a hook makes them so.
 
 ## Hard-won lessons (don't relearn these)

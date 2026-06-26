@@ -27,7 +27,7 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 ## Prerequisites
 
 - **GitHub CLI (`gh`)**, authenticated — the transport for every GitHub operation. Note: **write** operations run as a configured *bot account*, not your personal login — see **Bot identity & setup** below.
-- **AgentSpec plugin** (preferred, not required) — when installed, `a2a-workflow` uses `agentspec:sdd-workflow` as the implement engine (P5) and `agentspec:architect:the-planner` for P1 analysis, giving richer multi-phase SDD workflows. Without it, the plugin falls back to the bundled `agents/the-planner.md` (drives both P1 analysis and P5 planning) and `agents/codebase-explorer.md` (recon). All standalone building-block skills (`create-issue`, `publish-issue`, etc.) work without AgentSpec regardless.
+- **AgentSpec plugin** (preferred, not required) — when installed, `a2a-workflow` uses `agentspec:sdd-workflow` as the implement engine (P5) and `agentspec:architect:the-planner` for P1 analysis, giving richer multi-phase SDD workflows. Without it, the plugin falls back to the bundled `plugin/agents/the-planner.md` (drives both P1 analysis and P5 planning) and `plugin/agents/codebase-explorer.md` (recon). All standalone building-block skills (`create-issue`, `publish-issue`, etc.) work without AgentSpec regardless.
 
 ## Installation
 
