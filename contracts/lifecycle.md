@@ -9,7 +9,7 @@ An issue's life is a state machine. Each **column** has one **owner** (human or 
 | Column / state | Owner | Procedure | Exits to |
 |---|---|---|---|
 | **Draft / Refinement** | 🧑 human | author/refine the issue (`/create-issue`, `/create-adr`, `/create-epic`, agentspec `/brainstorm`) until it passes the DoR | Ready |
-| **Ready** (To-Do) | 🤖 autonomous | `/pickup #N` runs the DoR gate, then begins | In Progress · or Escalated (gate = NOT-READY) |
+| **Ready** (To-Do) | 🤖 autonomous | `/pickup #N` runs the DoR gate, then begins | In Progress · or → Refinement (gate NOT-READY → `needs-refinement`) |
 | **In Progress** | 🤖 autonomous | the `/pickup` engine: branch → SDD (implement) → smoke gate | Review · or Escalated (mid-flight block) |
 | **Escalated** | 🧑 human | answer the structured question in a comment; remove `status:needs-decision` | In Progress (a session resumes) |
 | **Review** | 🤖 blind-review, then 🧑 `/review-pr` | the blind reviewer runs the test plan + comments; the other human reviews the PR | Ready-to-merge · or → In Progress (changes requested) |
@@ -17,7 +17,7 @@ An issue's life is a state machine. Each **column** has one **owner** (human or 
 | **Done** | — | terminal (issue closed) | — |
 
 ## The two gates on the happy path
-- **DoR gate** (defines Draft → Ready; re-checked at pull): an issue is *Ready* only once it passes the Definition of Ready (`readiness:ready`). `/pickup` re-runs the gate when it pulls a Ready card (in case the issue went stale); a fail bounces it to Escalated / Refinement. See `dor-rubric.md`.
+- **DoR gate** (defines Draft → Ready; re-checked at pull): an issue is *Ready* only once it passes the Definition of Ready (`readiness:ready`). `/pickup` re-runs the gate when it pulls a Ready card (in case the issue went stale); a fail bounces it back to Refinement (`readiness:needs-refinement`). (A *mid-flight* block is different — that's Escalated / `status:needs-decision`.) See `dor-rubric.md`.
 - **Smoke gate** (In Progress → Review): no PR without an executed test **and** a real smoke of the changed path (captured transcript), incl. the shadow-trick for paid/destructive paths.
 
 ## Ownership boundary — where humans stay
