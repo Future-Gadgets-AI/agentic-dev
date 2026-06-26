@@ -45,8 +45,8 @@ The DoR gate's verdict, persisted on the issue. **Orthogonal** to `phase:` and `
 | `phase:review` | PR open; awaiting blind / human review |
 | `phase:done` | Merged; issue closing |
 
-## How the dimensions compose into lifecycle columns
-The kanban column an issue sits in (see `lifecycle.md`) is derived from `phase:` × `readiness:` × `status:`. For example: `phase:triage` + `readiness:draft` = the *Draft / Refinement* column (human-owned); `phase:triage` + `readiness:ready` = the *Ready* column (an agent may pull it); any `status:needs-decision` = the *Escalated* column.
+## How the dimensions compose into a lifecycle state
+An issue's lifecycle state (see `lifecycle.md`) is encoded by `phase:` × `readiness:` × `status:`. For example: `phase:triage` + `readiness:draft` = *Draft / Refinement* (human-owned); `phase:triage` + `readiness:ready` = *Ready* (an agent may pull it); any `status:needs-decision` = *Escalated*. A GitHub Projects board can't make columns from labels — it mirrors this state into a single-select **Status** field for its columns (designed in #19).
 
 ## Rules
 - **Validate against the live repo.** Run `gh label list --repo REPO` before applying. If a label here is missing on the repo, surface it and ask the human — **never auto-create** (the lone exception is a deliberate, human-approved scheme rollout).

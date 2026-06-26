@@ -2,7 +2,7 @@
 
 > **Enforcement: prompt-honored.** This is the contract `/pickup` and the human entrypoints are *told* to follow; deterministic gating (hooks) is a backlog item. See ADR-0003.
 
-An issue's life is a state machine. Each **column** has one **owner** (human or autonomous) and one **procedure**. The kanban board's columns map to these states via the `phase:` / `readiness:` / `status:` labels (`labels.md`).
+An issue's life is a state machine. Each **column** has one **owner** (human or autonomous) and one **procedure**. Each issue's state is encoded in its `phase:` / `readiness:` / `status:` labels (`labels.md`). A GitHub Projects board surfaces these as columns via a single-select **Status** field that mirrors the labels — Projects can't use labels for columns directly (the board mapping is designed in #19).
 
 ## States
 
