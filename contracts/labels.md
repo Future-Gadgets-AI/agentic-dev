@@ -2,7 +2,7 @@
 
 > **Enforcement: prompt-honored.** Components are *told* to validate against this file and the live repo; nothing hard-blocks a wrong label yet (hook enforcement is a backlog item). The repo's live labels are the ultimate truth — this file captures the intent.
 
-Single source of truth for the GitHub issue/PR labels this plugin uses. Every component that applies a label (`publish-issue`, `/pickup`, `fix-bug`, `create-issue`, `create-adr`) references this file via `${CLAUDE_PLUGIN_ROOT}/contracts/labels.md`.
+Single source of truth for the GitHub issue/PR labels this plugin uses. Every component that applies a label (`publish-issue`, `create-issue`, `create-adr`, `fix-bug`, and the planned `/pickup` — see #12) references this file via `${CLAUDE_PLUGIN_ROOT}/contracts/labels.md`.
 
 ## Namespaces
 

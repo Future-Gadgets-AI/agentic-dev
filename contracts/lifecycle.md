@@ -17,7 +17,7 @@ An issue's life is a state machine. Each **column** has one **owner** (human or 
 | **Done** | — | terminal (issue closed) | — |
 
 ## The two gates on the happy path
-- **DoR gate** (Ready → In Progress): is the issue fleshed-out enough to run autonomously? `readiness:ready` ⇒ proceed; otherwise bounce to Escalated / Refinement. See `dor-rubric.md`.
+- **DoR gate** (defines Draft → Ready; re-checked at pull): an issue is *Ready* only once it passes the Definition of Ready (`readiness:ready`). `/pickup` re-runs the gate when it pulls a Ready card (in case the issue went stale); a fail bounces it to Escalated / Refinement. See `dor-rubric.md`.
 - **Smoke gate** (In Progress → Review): no PR without an executed test **and** a real smoke of the changed path (captured transcript), incl. the shadow-trick for paid/destructive paths.
 
 ## Ownership boundary — where humans stay

@@ -21,7 +21,7 @@ Draft/Refinement ──DoR──> Ready ──/pickup──> In Progress ──>
 **Readiness** (`readiness:draft | needs-refinement | ready`) is an orthogonal dimension that gates Draft→Ready; scheduling (backlog vs active) is orthogonal again. Columns derive from `phase:` × `readiness:` × `status:`.
 
 ## The gates
-- **Definition-of-Ready gate** (`contracts/dor-rubric.md`, ADR-0004) — before autonomous work, `/pickup` checks the issue is ready, keyed to **reversibility × blast-radius, not model confidence**. Verdicts: READY / READY-WITH-LOGGED-ASSUMPTIONS / NOT-READY (with the specific gaps). Missing info that lives in the repo → the agent explores; intent only a human holds → it asks.
+- **Definition-of-Ready gate** (`contracts/dor-rubric.md`, ADR-0004) — the DoR defines the Draft→Ready boundary; `/pickup` re-checks it before starting work, keyed to **reversibility × blast-radius, not model confidence**. Verdicts: READY / READY-WITH-LOGGED-ASSUMPTIONS / NOT-READY (with the specific gaps). Missing info that lives in the repo → the agent explores; intent only a human holds → it asks.
 - **Verify / smoke gate** — no PR without an executed test **and** a real smoke of the changed path (captured), incl. the **shadow-trick** for paid/destructive paths.
 
 Both are **prompt-honored forcing functions today**, not hook-enforced. Real enforcement (hooks, especially for irreversible steps) is on the backlog. *The gates raise the floor; the shadow-trick + human merge cap the ceiling.*
