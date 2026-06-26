@@ -15,7 +15,7 @@ The whole point: turn "fix this" / "add this" into a **well-formed issue, a veri
 |---|---|
 | Requirement analysis, recon | `the-planner` (preferred: AgentSpec `agentspec:architect:the-planner`; fallback: bundled `agents/the-planner.md`) + read-only subagents |
 | Draft the issue / ADR | `create-issue` / `create-adr` |
-| Publish + label + relate | `publish-issue` (label scheme: `skills/a2a-workflow/assets/issue-labels.md`) |
+| Publish + label + relate | `publish-issue` (label scheme: `contracts/labels.md`) |
 | Implement | `agentspec:sdd-workflow` (preferred, requires AgentSpec) or `the-planner` + `codebase-explorer` + subagents (fallback — both bundled in `agents/`) |
 | Open the PR | `create-pr` |
 | The A2A model, branching, commits | `git-collaboration` (reference) |
