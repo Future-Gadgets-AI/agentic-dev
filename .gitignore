@@ -4,3 +4,6 @@
 # Machine-local Claude Code settings
 .claude/settings.local.json
 .claude/*.local.md
+
+# Ephemeral handoff / scratch (never committed)
+local_files/
