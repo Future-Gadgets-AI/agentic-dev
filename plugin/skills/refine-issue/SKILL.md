@@ -17,20 +17,20 @@ For a **headless or out-of-tree** run that targets a specific issue in a repo yo
 
 ## Flow
 
-1. **Fetch the draft.** `gh issue view <N> --repo REPO --json title,body,labels`. Confirm it is `readiness:draft` — this skill only refines drafts (a `needs-refinement` issue is fair game too; a `ready` one is already done).
+1. **Fetch the draft.** `gh issue view <N> --repo REPO --json title,body,labels`. Confirm it is `readiness:draft` — this skill only refines drafts (a `needs-refinement` issue is fair game too; a `ready` one is already done). If the issue is closed, already `phase:in-progress`/`review`, or carries no `readiness:` label, stop and report why — don't refine it.
 2. **Ground.** Read the issue and explore the repo for the context it leans on. Use read-only recon (subagents / grep / read). Do not guess what the codebase can answer.
-3. **Grade.** Apply **`contracts/dor-rubric.md`**: Pass 1 sets the blast-radius bar (GREEN / AMBER / RED); Pass 2 grades D1–D4. Produce the rubric's output — a **verdict + the named gaps** — never an opaque score.
+3. **Grade.** Apply **`contracts/dor-rubric.md`**: Pass 1 sets the blast-radius bar (GREEN / AMBER / RED); Pass 2 grades D1–D4. Produce the rubric's output — **one of the three verdicts** (READY / READY-WITH-LOGGED-ASSUMPTIONS / NOT-READY) **+ the named gaps** — never an opaque score.
 4. **Resolve the gaps.**
    - **Epistemic** (the answer exists in the repo) → find it, fill it into the draft, and **log the fill + its evidence** (path/ref). Never ask the human something the codebase already answers — this is the anti-over-asking valve.
    - **Aleatoric** (intent only the human holds):
      - *Interactive* → ask via `AskUserQuestion`.
      - *Headless / auto* → if the issue is GREEN/AMBER (reversible), proceed on the **most reversible documented assumption** and record it; if the gap is load-bearing on a **RED** issue, do **not** guess — escalate (step 6).
 5. **Rewrite** the body self-contained, per `create-issue`'s content rules (zero leaked context, native relationships, one topic, no Labels line). It must read on its own to the other person's agent.
-6. **Flip — bounded by blast-radius** (the rubric's decision rules; the write goes through `publish-issue`, as the bot):
-   - 🟢 **GREEN** — D1 & D3 PASS → set `readiness:ready` (any D2/D4 WEAK → record as a logged assumption).
-   - 🟡 **AMBER** — no FAIL → set `readiness:ready` with logged assumptions; any FAIL → escalate.
-   - 🔴 **RED** — **never auto-ready.** Even all-PASS: the irreversible step must be gated at the harness layer (#17), which is not built. Set `readiness:needs-refinement` + `status:needs-decision`, post the gaps as a structured comment, @-mention the decider, and stop.
-   - **NOT-READY** at any bar → `readiness:needs-refinement`, the failing dimensions as a comment, bounce to the human.
+6. **Flip — map the rubric's verdict (from step 3) to a label** (the write goes through `publish-issue`, as the bot). Do **not** re-derive from D1–D5 — consume the verdict the rubric already produced:
+   - **READY** → set `readiness:ready`.
+   - **READY-WITH-LOGGED-ASSUMPTIONS** → set `readiness:ready`; record each assumption on the issue.
+   - **NOT-READY** → set `readiness:needs-refinement`; post the failing dimensions as a comment; bounce to the human.
+   - 🔴 **RED override** (on top of the verdict): a RED issue is **never** auto-readied, even on a READY verdict — its irreversible step must be gated at the harness layer (#17, not built). Set `readiness:needs-refinement` + `status:needs-decision`, post the gaps, @-mention the decider, and stop.
 7. **Audit trail.** Whatever the verdict, leave a comment recording: the blast-radius class, the verdict, each epistemic fill + its evidence, and each logged assumption. "Auto" is not "silent" — its decisions stay reviewable (by the human, the board #19, or the recommender #25).
 
 ## Bot identity (every board write)
