@@ -19,6 +19,7 @@ The whole point: turn "fix this" / "add this" into a **well-formed issue, a veri
 | Implement | `agentspec:sdd-workflow` (preferred, requires AgentSpec) or `the-planner` + `codebase-explorer` + subagents (fallback — both bundled in `agents/`) |
 | Open the PR | `create-pr` |
 | The A2A model, branching, commits | `git-collaboration` (reference) |
+| Version bump (shipped changes) | `scripts/bump.sh --apply` (ADR-0006, #33) |
 
 The four gates (◆) and the phased rhythm are this skill's own — detailed in `assets/`.
 
@@ -34,6 +35,7 @@ Deliver each artifact **as its phase completes** — never hoard everything to t
 - **P4 · BRANCH** — `<type>/<slug>` (`fix/…`, `feat/…`), never `main`. **Push the branch immediately** (as the bot — `source ${CLAUDE_PLUGIN_ROOT}/scripts/bot-auth.sh` at the top of the block) — nothing to review, and it makes the work visible.
 - **P5 · IMPLEMENT** — `agentspec:sdd-workflow` as the preferred engine (requires AgentSpec plugin); fallback when AgentSpec is not installed: bundled `agents/the-planner.md` for planning + bundled `agents/codebase-explorer.md` for recon + read-only subagents. Work in **chunks**; after each chunk that passes G2, **commit (conventional) + push**.
 - **◆G2 · VERIFY / SMOKE GATE** — run the tests **and** a real smoke of the changed path; demonstrate the specific behavior. No "done" without it (`assets/verify-gate.md`). Includes the **shadow trick** for paid/destructive paths (prove the guard fires with zero spend).
+- **P5.5 · BUMP (shipped changes only)** — if the change touches `plugin/`, run `plugin/scripts/bump.sh --apply` (idempotent; level from the branch prefix, unknown → patch) and commit the version bump. The CI bump-gate (#33, ADR-0006) blocks a `plugin/**` change with no bump; a docs/dev-only change is a no-op.
 - **P6 · PR** — draft → self-review → publish via `create-pr` (structured body; **links the issue/ADR** — mandatory).
 - **P7 · BLIND REVIEW** — spawn an **independent blind subagent** (fresh context, *not* a fork) that runs the PR's test plan, reviews the diff, and **posts findings as a PR comment** (as the bot) tagging both devs (`assets/blind-review.md`). Address blocking findings → push. This is *not* the human merge and *not* the other agent's `review-pr`.
 - **P8 · REPORT** — request **both** configured reviewers (mechanism in `create-pr`); emit the final report (`assets/final-report.md`): issue#, PR#, assumptions, ripple, **smoke evidence**, blind-review verdict, residual risk.
