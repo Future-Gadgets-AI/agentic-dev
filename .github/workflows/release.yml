@@ -1,0 +1,33 @@
+name: release
+# Post-merge (ADR-0006, #33): when main's version is one we haven't tagged yet,
+# cut the tag + a GitHub Release. Idempotent on tag-existence, so a merge that did
+# not change the version is a no-op. Uses the built-in GITHUB_TOKEN (github-actions[bot]),
+# whose writes do not re-trigger workflows — loop-safe by construction.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # need tags + history
+      - name: Tag + release when the version changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(python3 -c 'import json; print(json.load(open("plugin/.claude-plugin/plugin.json"))["version"])')"
+          tag="v${version}"
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "::notice::${tag} already exists — version unchanged, nothing to release."
+            exit 0
+          fi
+          git tag "${tag}"                       # lightweight tag — no committer identity needed
+          git push origin "${tag}"
+          gh release create "${tag}" --generate-notes --title "${tag}"
+          echo "::notice::Released ${tag}."

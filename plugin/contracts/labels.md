@@ -45,6 +45,11 @@ The DoR gate's verdict, persisted on the issue. **Orthogonal** to `phase:` and `
 | `phase:review` | PR open; awaiting blind / human review |
 | `phase:done` | Merged; issue closing |
 
+### `no-release` — version-gate waiver (PR-only; at most one)
+| Value | Meaning |
+|-------|---------|
+| `no-release` | On a PR: waive the version-bump gate (ADR-0006/#33) for a deliberate shipped change that must ship **without** a version bump (e.g. a CI-only fix to the gate, or a revert that should not cut a release). Use sparingly — the gate exists to keep releases honest. |
+
 ## How the dimensions compose into a lifecycle state
 An issue's lifecycle state (see `lifecycle.md`) is encoded by `phase:` × `readiness:` × `status:`. For example: `phase:triage` + `readiness:draft` = *Draft / Refinement* (human-owned); `phase:triage` + `readiness:ready` = *Ready* (an agent may pull it); any `status:needs-decision` = *Escalated*. A GitHub Projects board can't make columns from labels — it mirrors this state into a single-select **Status** field for its columns (designed in #19).
 

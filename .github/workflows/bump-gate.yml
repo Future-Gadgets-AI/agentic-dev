@@ -1,0 +1,28 @@
+name: bump-gate
+# PR gate (ADR-0006, #33): a change under plugin/ must carry a version > main.
+# Validate-only — never writes. The `no-release` label waives it. Making this a
+# *required* status check is branch-protection config (#36), not this workflow.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  bump-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # need full history to compare against origin/main
+      - name: Enforce version bump on shipped (plugin/) changes
+        env:
+          HAS_NO_RELEASE: ${{ contains(github.event.pull_request.labels.*.name, 'no-release') }}
+        run: |
+          if [ "$HAS_NO_RELEASE" = "true" ]; then
+            echo "::notice::'no-release' label present — version-bump gate waived."
+            exit 0
+          fi
+          bash plugin/scripts/bump.sh --check
