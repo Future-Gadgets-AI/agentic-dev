@@ -99,6 +99,8 @@ Self-contained — no local paths, no "as we discussed", no private session stat
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
+> **CI gate — `closing-keyword-gate` (#48):** for PRs to `main`, CI fails the PR unless the body has a closing keyword (`Closes`/`Fixes`/`Resolves #NN`) **or** an explicit opt-out (`Implements ADR #NN`, or `[no-close: <reason>]`). A bare `(#NN)` does **not** close the issue and will **not** pass — so the **Implements** line above is now enforced mechanically.
+
 ## Step 6 — Create the PR
 
 ```bash

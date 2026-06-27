@@ -1,0 +1,26 @@
+name: closing-keyword-gate
+# PR gate (issue #48): a PR to main must declare a closing keyword for its tracking issue
+# (Closes/Fixes/Resolves #NN) OR carry an explicit opt-out marker (Implements ADR #NN, or
+# [no-close: <reason>]). Mechanically enforces the create-pr skill's mandatory "Implements"
+# line so that merging keeps GitHub-as-state-store truthful — PRs #43/#44 used a bare "(#NN)"
+# and left their issues OPEN, and review missed it. Read-only; the opt-out markers are the
+# escape hatch. Making this a *required* status check is branch-protection config (#36).
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, reopened, synchronize]   # `edited` => re-runs when the body is fixed
+
+permissions:
+  contents: read
+
+jobs:
+  closing-keyword-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require an issue-closing keyword or an explicit opt-out
+        env:
+          # Pass the PR body via env — never interpolate ${{ }} into the run script
+          # (untrusted PR text -> shell injection). The script reads $PR_BODY.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: bash .github/scripts/check-closing-keyword.sh

@@ -37,6 +37,8 @@ gh issue view <linked-issue> --repo REPO
 
 If the PR links **nothing** and states no inline acceptance criteria → **request changes**: an unanchored PR can't be objectively verified. Ask for the source Issue/ADR or explicit criteria.
 
+> **CI gate — `closing-keyword-gate` (#48):** the body must carry a closing keyword (`Closes`/`Fixes`/`Resolves #NN`) **or** an explicit opt-out (`Implements ADR #NN`, or `[no-close: <reason>]`); a bare `(#NN)` fails it. Confirm the check is green, and if an opt-out was used, sanity-check the stated reason is legitimate.
+
 ## Step 3 — RUN THE TESTS (non-negotiable)
 
 Run the test plan from the PR body, plus the project's own suite (`pytest`, `npm test`, `make test`, etc. — whatever the repo uses). Do **not** approve on a read-through alone.
