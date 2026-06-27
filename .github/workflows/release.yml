@@ -1,6 +1,6 @@
 name: release
 # Post-merge (ADR-0006, #33): when main's version is one we haven't tagged yet,
-# cut the tag + a GitHub Release. Idempotent on tag-existence, so a merge that did
+# cut the tag + a GitHub Release. Idempotent on release-existence, so a merge that did
 # not change the version is a no-op. Uses the built-in GITHUB_TOKEN (github-actions[bot]),
 # whose writes do not re-trigger workflows — loop-safe by construction.
 on:
@@ -10,6 +10,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release          # serialize releases; never cancel one mid-flight
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -17,17 +21,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0          # need tags + history
-      - name: Tag + release when the version changed
+      - name: Release when the version changed
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="$(python3 -c 'import json; print(json.load(open("plugin/.claude-plugin/plugin.json"))["version"])')"
           tag="v${version}"
-          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
-            echo "::notice::${tag} already exists — version unchanged, nothing to release."
+          # Idempotency keys on the RELEASE (the deliverable), not the tag — so a run that
+          # created the tag but died before the release isn't permanently wedged.
+          if gh release view "${tag}" >/dev/null 2>&1; then
+            echo "::notice::Release ${tag} already exists — version unchanged, nothing to do."
             exit 0
           fi
-          git tag "${tag}"                       # lightweight tag — no committer identity needed
-          git push origin "${tag}"
-          gh release create "${tag}" --generate-notes --title "${tag}"
+          # Creates the tag at this commit AND the release in one call (also recovers a dangling tag).
+          gh release create "${tag}" --target "${GITHUB_SHA}" --generate-notes --title "${tag}"
           echo "::notice::Released ${tag}."

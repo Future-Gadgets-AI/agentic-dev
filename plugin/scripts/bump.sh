@@ -50,9 +50,16 @@ bump_version() {  # <base-version> <level>
     *) die "unknown level: $2" ;;
   esac
 }
+require_semver() {  # accept only plain X.Y.Z integers — fail fast on pre-release/build suffixes
+  printf '%s' "$1" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' \
+    || die "version '$1' is not plain X.Y.Z (pre-release/build suffixes unsupported)"
+}
 
 # --- inputs ---
-level_from_branch() {  # branch prefix -> bump level; anything unrecognized -> patch
+level_from_branch() {  # branch prefix -> bump level; anything unrecognized -> patch.
+  # Major is signaled by a `major/*` branch. ADR-0006 also names a `breaking-change` label,
+  # but --apply runs at P5.5 (before the PR exists), so a PR label cannot drive it — the
+  # branch prefix is the mechanism.
   case "$(git rev-parse --abbrev-ref HEAD)" in
     feat/*|feature/*) echo minor ;;
     major/*)          echo major ;;
@@ -68,25 +75,26 @@ ensure_base() {
 plugin_changed() { ! git diff --quiet "${BASE_REF}" -- "${SHIPPED_PREFIX}"; }
 
 main() {
+  local mode="${1:-}"
+  case "$mode" in --check|--apply) ;; *) die "usage: bump.sh --check | --apply" ;; esac
   [ -f "$PLUGIN_JSON" ] || die "missing $PLUGIN_JSON — run from the repo root"
   ensure_base
   local cur base level target
-  case "${1:-}" in
+  case "$mode" in
     --check)
       if ! plugin_changed; then echo "bump: no shipped (plugin/) change vs main — OK"; exit 0; fi
-      cur="$(version_in_tree)"; base="$(version_on_base)"
+      cur="$(version_in_tree)"; base="$(version_on_base)"; require_semver "$cur"; require_semver "$base"
       if semver_gt "$cur" "$base"; then echo "bump: plugin/ changed; version $cur > main $base — OK"; exit 0; fi
       die "plugin/ changed but version $cur is not > main $base — run: plugin/scripts/bump.sh --apply"
       ;;
     --apply)
       if ! plugin_changed; then echo "bump: no shipped (plugin/) change — nothing to bump"; exit 0; fi
-      cur="$(version_in_tree)"; base="$(version_on_base)"
+      cur="$(version_in_tree)"; base="$(version_on_base)"; require_semver "$cur"; require_semver "$base"
       if semver_gt "$cur" "$base"; then echo "bump: version $cur already ahead of main $base — no-op"; exit 0; fi
       level="$(level_from_branch)"; target="$(bump_version "$base" "$level")"
       write_version "$target"
       echo "bump: $cur -> $target ($level vs main $base)"
       ;;
-    *) die "usage: bump.sh --check | --apply" ;;
   esac
 }
 main "$@"
