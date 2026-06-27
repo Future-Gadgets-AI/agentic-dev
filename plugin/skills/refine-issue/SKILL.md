@@ -11,8 +11,9 @@ Turns a **`readiness:draft`** issue into a **`readiness:ready`** one: ground it,
 
 ## Detect the repo first (never hardcode)
 ```bash
-gh repo view --json nameWithOwner -q .nameWithOwner   # → REPO
+gh repo view --json nameWithOwner -q .nameWithOwner   # in-tree → REPO
 ```
+For a **headless or out-of-tree** run that targets a specific issue in a repo you are not inside, take `OWNER/REPO` from the invocation and pass `--repo OWNER/REPO` on **every** `gh` call (view, label edit, comment) — do not rely on the working directory.
 
 ## Flow
 
