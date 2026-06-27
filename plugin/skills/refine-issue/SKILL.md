@@ -1,6 +1,6 @@
 ---
 name: refine-issue
-description: Takes a `readiness:draft` issue, grounds it against the repo, runs the Definition-of-Ready rubric, fills the gaps the codebase can answer itself, asks the human only for genuine intent gaps, rewrites it self-contained, and flips it to `readiness:ready` — the human-side mirror of `/pickup`'s autonomy gate. Auto-refines (resolves and flips without a per-issue approval cycle), bounded by blast-radius. Use when the user wants to refine, ready, or flesh out a draft issue, raise an issue to ready, or prepare the board's drafts for autonomous pickup.
+description: Refines a `readiness:draft` or bounced `readiness:needs-refinement` GitHub issue up to `readiness:ready`: grounds it against the repo, applies the Definition-of-Ready rubric, resolves the gaps the codebase can answer itself, asks the human only for genuine intent gaps, rewrites it self-contained, and flips the label — auto, within blast-radius bounds. The human-side mirror of `/pickup`'s autonomy gate. Use when the user wants to refine, ready, grade, or flesh out a draft issue, DoR-check it, or prepare the board's drafts for autonomous pickup. Authoring a brand-new issue is create-issue; executing a ready one is /pickup.
 ---
 
 # Refine Issue
@@ -17,21 +17,21 @@ For a **headless or out-of-tree** run that targets a specific issue in a repo yo
 
 ## Flow
 
-1. **Fetch the draft.** `gh issue view <N> --repo REPO --json title,body,labels`. Confirm it is `readiness:draft` — this skill only refines drafts (a `needs-refinement` issue is fair game too; a `ready` one is already done). If the issue is closed, already `phase:in-progress`/`review`, or carries no `readiness:` label, stop and report why — don't refine it.
+1. **Fetch the draft.** `gh issue view <N> --repo REPO --json title,body,labels`. This skill refines `readiness:draft` and bounced `readiness:needs-refinement` issues. **Stop and report why** (don't refine) if the issue is instead: `readiness:ready` (already done), closed, `phase:in-progress`/`review`, or carries no `readiness:` label.
 2. **Ground.** Read the issue and explore the repo for the context it leans on. Use read-only recon (subagents / grep / read). Do not guess what the codebase can answer.
 3. **Grade.** Apply **`contracts/dor-rubric.md`**: Pass 1 sets the blast-radius bar (GREEN / AMBER / RED); Pass 2 grades D1–D4. Produce the rubric's output — **one of the three verdicts** (READY / READY-WITH-LOGGED-ASSUMPTIONS / NOT-READY) **+ the named gaps** — never an opaque score.
 4. **Resolve the gaps.**
    - **Epistemic** (the answer exists in the repo) → find it, fill it into the draft, and **log the fill + its evidence** (path/ref). Never ask the human something the codebase already answers — this is the anti-over-asking valve.
-   - **Aleatoric** (intent only the human holds):
+   - **Aleatoric** (intent only the human holds) — **default to auto/headless; take the *Interactive* branch only when a human is actively in the loop**:
      - *Interactive* → ask via `AskUserQuestion`.
      - *Headless / auto* → if the issue is GREEN/AMBER (reversible), proceed on the **most reversible documented assumption** and record it; if the gap is load-bearing on a **RED** issue, do **not** guess — escalate (step 6).
-5. **Rewrite** the body self-contained, per `create-issue`'s content rules (zero leaked context, native relationships, one topic, no Labels line). It must read on its own to the other person's agent.
+5. **Rewrite + write back** (READY-bound issues only). Rewrite the body self-contained, per `create-issue`'s content rules (zero leaked context, native relationships, one topic, no Labels line) — it must read on its own to the other person's agent — then **persist it**: `gh issue edit <N> --repo REPO --body-file <file>`, as the bot (see Bot identity). A NOT-READY / RED **bounce skips the rewrite** — the body stays human-owned; go straight to step 6.
 6. **Flip — map the rubric's verdict (from step 3) to a label** (the write goes through `publish-issue`, as the bot). Do **not** re-derive from D1–D5 — consume the verdict the rubric already produced:
    - **READY** → set `readiness:ready`.
    - **READY-WITH-LOGGED-ASSUMPTIONS** → set `readiness:ready`; record each assumption on the issue.
    - **NOT-READY** → set `readiness:needs-refinement`; post the failing dimensions as a comment; bounce to the human.
    - 🔴 **RED override** (on top of the verdict): a RED issue is **never** auto-readied, even on a READY verdict — its irreversible step must be gated at the harness layer (#17, not built). Set `readiness:needs-refinement` + `status:needs-decision`, post the gaps, @-mention the decider, and stop.
-7. **Audit trail.** Whatever the verdict, leave a comment recording: the blast-radius class, the verdict, each epistemic fill + its evidence, and each logged assumption. "Auto" is not "silent" — its decisions stay reviewable (by the human, the board #19, or the recommender #25).
+7. **Audit trail.** Whatever the verdict, leave a comment (as the bot) recording: the blast-radius class, the verdict, each epistemic fill + its evidence, and each logged assumption. "Auto" is not "silent" — its decisions stay reviewable (by the human, the board #19, or the recommender #25).
 
 ## Bot identity (every board write)
 The label flip, the rewritten body, and the audit/escalation comments are GitHub writes — run them as the machine account:
