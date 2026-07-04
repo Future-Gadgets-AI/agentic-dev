@@ -7,7 +7,7 @@
 
 ## The vision (why we're building this)
 - **The issue is the spec. GitHub is the state store. Sessions are stateless workers.** Any session resumes any issue from its GitHub state; deferred work is a *draft issue*, not a TODO. (ADR-0001)
-- **Humans author + approve; the line between runs autonomously.** Authoring entrypoints create work; the agentic entrypoint `/pickup #N` (planned, #12) consumes it — *issue-only*. (ADR-0002)
+- **Humans author + approve; the line between runs autonomously.** Authoring entrypoints create work; the agentic entrypoint `/pickup #N` (`plugin/commands/pickup.md`, built via #51) consumes it — *issue-only*. (ADR-0002)
 - Grow it **bottom-up** into a fully autonomous, observable, guard-railed factory — see the backlog (#12–#20). Refactoring earlier decisions is expected, not a failure.
 
 ## Canonical sources — point at these, don't duplicate
@@ -29,7 +29,7 @@
 - **Conventional commits**; end with the Claude co-author trailer.
 - **Component taxonomy** (ADR-0005): `commands/` = entrypoints/orchestration · `skills/` = capabilities (loadable) · `agents/` = roles (single-responsibility, body ≈ a system prompt) · `contracts/` = canonical rules. **Pick by role, not by folder.**
 - **Labels**: validate against the live repo before applying; **never auto-create** (scheme = `plugin/contracts/labels.md`).
-- **Enforcement honesty**: the gates are *prompt-honored forcing functions*, not hook-enforced. Never call them "enforced" until a hook makes them so.
+- **Enforcement honesty**: the gates are *prompt-honored forcing functions*, not hook-enforced — except bot identity, which `plugin/hooks/enforce-bot-identity.py` enforces on git/gh org writes (gaps: #57). Never call the rest "enforced" until a hook makes them so.
 
 ## Hard-won lessons (don't relearn these)
 - **Parallel forks share the working tree.** A fork given full context + a loose task *derails* (one re-created the foundation issue + a branch and committed under the main run). Give forks **trimmed briefs**, not the whole session; **isolate read-only workers in a fresh clone**.
