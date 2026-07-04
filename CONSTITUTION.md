@@ -28,7 +28,7 @@ Non-negotiable operating rules for autonomous and human-assisted work in this re
 
 ### III. The Definition-of-Ready Autonomy Gate
 
-- Before starting unattended work, the executor MUST run the Definition-of-Ready gate keyed to **reversibility × blast-radius** — never to the model's own stated or apparent confidence.
+- Before starting unattended work, the executor MUST run the Definition-of-Ready gate keyed to **reversibility × blast-radius** (the rubric's D5 dimension) — never to the model's own stated or apparent confidence.
 - A `RED` (one-way-door) classification MUST require every readiness dimension (D1–D4) to PASS before autonomous work proceeds; the exact grading table is the single source of truth in `plugin/contracts/dor-rubric.md` and is intentionally not restated here, to avoid the two drifting out of sync.
 - A NOT-READY verdict MUST be emitted as the specific failing dimensions — targeted questions or explore-directives — never as a single opaque score, and MUST relabel the issue `readiness:needs-refinement` (or `status:needs-decision` if the block is mid-flight) rather than proceed on a guess.
 - Missing information the codebase itself can answer (epistemic) MUST be resolved by the agent exploring; missing information only a human's intent can supply (aleatoric) MUST be asked, never guessed.
@@ -38,9 +38,9 @@ Non-negotiable operating rules for autonomous and human-assisted work in this re
 
 **Traces to:** ADR-0004 (#23); `plugin/contracts/dor-rubric.md`.
 
-### IV. The Human Boundary: Author, Decide, Merge
+### IV. The Human Boundary: Author, Decide, Approve-and-Merge
 
-- A human MUST own three — and only these three — points in the lifecycle: authoring/refining an issue, resolving an escalated (`status:needs-decision`) question, and merging the final PR.
+- A human MUST own three — and only these three — points in the lifecycle: authoring/refining an issue, resolving an escalated (`status:needs-decision`) question, and approving-and-merging the final PR. Approval is not a courtesy click: branch protection on `main` mechanically requires one approving review from a code owner before any merge, so the human's approving review is a platform-enforced part of this third point.
 - Everything between an issue reaching `readiness:ready` and a PR reaching Review MUST NOT require a human in the loop; a human may supervise or intervene at will, but the design target is zero-touch.
 - A mid-flight block MUST be escalated asynchronously (label + structured comment) rather than pausing for a synchronous human wait; a later session MUST be able to resume from that state alone.
 - A component MUST NOT merge a PR autonomously, regardless of how green its checks are.
@@ -52,7 +52,7 @@ Non-negotiable operating rules for autonomous and human-assisted work in this re
 ### V. Verify Before Merge: the Smoke Gate and Blind Review
 
 - A PR MUST NOT be opened without an executed test and a real smoke of the changed path, captured as a transcript — including the shadow-trick for paid or destructive paths that cannot be safely run for real.
-- Every PR MUST then receive a blind review — an agent with fresh context, isolated in its own clone, not a fork and not the shared working tree — before the PR goes to the human for the merge decision (Principle IV); how deeply the human additionally reviews is their call, not a mandated ceremony.
+- Every PR MUST then receive a blind review — an agent with fresh context, isolated in its own clone, not a fork and not the shared working tree — before the PR goes to the human for approval. The blind review informs the human's required approving review (Principle IV); it never substitutes for it.
 - The blind reviewer MUST actually execute the issue's test plan and observe the result, not infer completion from the diff alone.
 
 **Rationale:** A confident-sounding transcript is not the same as a change that works, and an agent reviewing its own work in its own context tends to confirm what it already believes it did. A real smoke before the PR opens, then an independently-run re-verification after, catches what either check alone would miss.
@@ -108,7 +108,7 @@ This file states its own intended consumption; wiring the steps below to actuall
 - **MINOR** — a new principle is ratified, or an existing principle's guidance is materially expanded.
 - **PATCH** — wording, clarification, or rationale fixes that don't change what's required.
 
-**Compliance review.** A PR is expected to be checked against this constitution at the review step (see Consumption Contract). Today that check is **prompt-honored** — the reviewer is told to do it — not hook-enforced (Principle VI); this section will be updated the moment that changes.
+**Compliance review.** A PR is expected to be checked against this constitution at the review step (see Consumption Contract). Today that constitution-conformance check is **prompt-honored** — the reviewer is told to do it — not hook-enforced (Principle VI); this section will be updated the moment that changes. Separately, the human approving review itself **is** mechanically enforced: branch protection on `main` requires one code-owner approval before merge (Principle IV).
 
 **Volatility contract.** This file changes only through the amendment procedure above, with a version bump — never as a drive-by edit in an unrelated PR. Contrast `GOAL.md`, which may be updated through a normal documentation PR.
 
