@@ -21,6 +21,13 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 |---|---|
 | `/agentic-dev:a2a-workflow` | End-to-end issue → PR engine: understand → clarify → issue → branch → implement → verify → PR → blind-review, with four quality gates |
 | `/agentic-dev:fix-bug` | Thin wrapper that drives a bug through `a2a-workflow` |
+| `/agentic-dev:implement` | Atomic design+build for one ready issue (ADR-0009's composable middle — no branching, no PR of its own) |
+
+**Commands** (entrypoints — orchestration only, per the component taxonomy):
+
+| Command | Purpose |
+|---|---|
+| `/agentic-dev:pickup #N` | Execute a `readiness:ready` issue end-to-end, headless: DoR re-check → branch → implement → verify → draft PR → blind review |
 
 **Setup:** `/agentic-dev:init` — guided one-time bot-credential onboarding (create or wire the token, verify, store). See **Bot identity & setup** below.
 
@@ -57,6 +64,7 @@ The PAT must be **fine-grained** with **Resource owner = your org** (approved by
 
 - **Quick GitHub action:** `/agentic-dev:create-pr`, `/agentic-dev:create-issue`, etc. — invoke the building block you need.
 - **Full bug flow:** `/agentic-dev:fix-bug <description>` — runs the gated issue → PR engine end to end (richer with AgentSpec; falls back to the bundled agents without it).
+- **Autonomous execution:** `/agentic-dev:pickup #N` — take a `readiness:ready` issue to a review-ready **draft PR** unattended (the human refines issues before, and merges after).
 
 ## Credits
 

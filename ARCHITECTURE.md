@@ -24,7 +24,7 @@ Draft/Refinement ──DoR──> Ready ──/pickup──> In Progress ──>
 - **Definition-of-Ready gate** (`plugin/contracts/dor-rubric.md`, ADR-0004) — the DoR defines the Draft→Ready boundary; `/pickup` re-checks it before starting work, keyed to **reversibility × blast-radius, not model confidence**. Verdicts: READY / READY-WITH-LOGGED-ASSUMPTIONS / NOT-READY (with the specific gaps). Missing info that lives in the repo → the agent explores; intent only a human holds → it asks.
 - **Verify / smoke gate** — no PR without an executed test **and** a real smoke of the changed path (captured), incl. the **shadow-trick** for paid/destructive paths.
 
-Both are **prompt-honored forcing functions today**, not hook-enforced. Real enforcement (hooks, especially for irreversible steps) is on the backlog. *The gates raise the floor; the shadow-trick + human merge cap the ceiling.*
+Both gates are **prompt-honored forcing functions today**, not hook-enforced; broader enforcement (hooks, especially for irreversible steps) is on the backlog. One rule *is* hook-enforced already: bot identity for org writes (`plugin/hooks/enforce-bot-identity.py` blocks ambient git/gh writes — coverage gaps tracked in #57). *The gates raise the floor; the shadow-trick + human merge cap the ceiling.*
 
 ## Escalation is async (fire-and-forget)
 A NOT-READY verdict or a mid-flight blocking question never makes a human sit and wait: the card gets `status:needs-decision` + a **structured comment** and parks in the *Escalated* column. A later session resumes it. The human reviews a "brownfield" card when convenient, then fire-and-forgets again.
@@ -38,7 +38,7 @@ Chosen by **role**, not by folder (commands and agents both nest):
 | **agent** | a role/task, single-responsibility (body ≈ a system prompt) | blind reviewer, explorer, planner |
 | **`plugin/contracts/`** | canonical rules/data | lifecycle, DoR rubric, labels |
 
-The existing skills predate this taxonomy; migration is **incremental** (a backlog item), not a big-bang prerequisite.
+The existing skills predate this taxonomy; migration is **incremental** (a backlog item), not a big-bang prerequisite. First `plugin/commands/` entry: `/pickup` (#51 — ADR-0009's execution composer); the human entrypoints remain on the skills surface pending #14.
 
 ## Records & where each thing lives
 | Artifact | Answers | Where |
