@@ -10,3 +10,6 @@ local_files/
 
 # ADR / issue drafts — ephemeral; published as GitHub issues, not committed
 notes/
+
+# implement skill — throwaway synthesized design-input (never commit)
+.claude/sdd/_synthesized/
