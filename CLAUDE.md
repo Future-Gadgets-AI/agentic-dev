@@ -37,4 +37,4 @@
 - **Distrust a tidy subagent report** — verify against `git`/`gh` ground truth before believing (or repeating) it.
 
 ## Backlog = the roadmap
-Draft issues on the board: `/pickup` #12 (headline) · `/create-epic` #13 · component migration #14 · hook enforcement #17 · observability #18 · GitHub Projects board #19 · guardrails #20. Validate `/pickup` by **dogfooding it on the "add Mandarin" feature** — it stresses the autonomy gate, which the foundation work didn't.
+Draft issues on the board: `/create-epic` #13 · component migration #14 · hook enforcement #17 · observability #18 · GitHub Projects board #19 · guardrails #20. (#12 `/pickup` closed-as-delivered 2026-07-04, validated on a real `/pickup #25` run; the "add Mandarin" dogfood remains a future stress of the autonomy gate on messier human prose.)
