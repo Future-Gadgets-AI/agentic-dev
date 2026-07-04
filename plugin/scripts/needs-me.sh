@@ -91,16 +91,26 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 FIELDS="number,title,url,repository,createdAt,assignees"
+LIMIT=100   # gh search defaults to 30 and truncates SILENTLY without an explicit --limit
+
+_warn_if_capped() {  # <json-file> <what> — a full page means results were likely cut off
+  local n
+  n="$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))))' "$1" 2>/dev/null)" || return 0
+  if [ "${n:-0}" -ge "$LIMIT" ]; then
+    echo "needs-me: WARN '$2' hit the $LIMIT-result query cap — this group may be truncated." >&2
+  fi
+}
 
 # --- Group 1: needs your review — one call per human reviewer ---
 mkdir -p "$TMP/reviews"
 i=0
 for r in $REVIEWERS; do
   if ! gh search prs --owner "$OWNER" --state open --review-requested "$r" \
-        --json "$FIELDS" >"$TMP/reviews/$i.json" 2>"$TMP/reviews/$i.err"; then
+        --limit "$LIMIT" --json "$FIELDS" >"$TMP/reviews/$i.json" 2>"$TMP/reviews/$i.err"; then
     echo "[]" >"$TMP/reviews/$i.json"
     echo "needs-me: WARN review-request query for '$r' failed: $(tail -1 "$TMP/reviews/$i.err")" >&2
   fi
+  _warn_if_capped "$TMP/reviews/$i.json" "review requests for $r"
   i=$((i + 1))
 done
 
@@ -109,10 +119,11 @@ _search_label() {  # <label> <out-file>
   local label="$1" out="$2"
   local err="$out.err"
   if ! gh search issues --owner "$OWNER" --state open --label "$label" \
-        --json "$FIELDS" >"$out" 2>"$err"; then
+        --limit "$LIMIT" --json "$FIELDS" >"$out" 2>"$err"; then
     echo "[]" >"$out"
     echo "needs-me: WARN query for label '$label' failed: $(tail -1 "$err")" >&2
   fi
+  _warn_if_capped "$out" "label $label"
 }
 _search_label "status:needs-decision"        "$TMP/decisions.json"
 _search_label "phase:in-progress"            "$TMP/inprogress.json"
