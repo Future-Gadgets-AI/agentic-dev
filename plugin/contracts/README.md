@@ -14,6 +14,7 @@ Components reference these via `${CLAUDE_PLUGIN_ROOT}/contracts/…`.
 | `lifecycle.md` | the issue lifecycle state machine (columns, owners, procedures, transitions) |
 | `dor-rubric.md` | the Definition-of-Ready autonomy-gate rubric |
 | `labels.md` | the GitHub label scheme (type / priority / readiness / status / phase) |
+| `repo-standard.md` | the repo-hardening contract (branch protection, branch-naming ruleset, label colors/descriptions, CODEOWNERS format, bot-wiring pointer) applied by `/harden-repo` |
 
 ## Enforcement honesty
 **Every file states whether it is prompt-honored or hook-enforced.** Today they are all *prompt-honored forcing functions* — components are *told* to follow them; nothing deterministically blocks a violation. That is better than nothing, but it is **not a guarantee**. Real enforcement (hooks at the harness layer, especially for irreversible steps) is tracked as a backlog issue. Do **not** describe these as "enforced" until a hook makes them so — that overstatement is a known anti-pattern (agentspec's own contract files concede they are "best-effort") and we are explicitly avoiding it.
