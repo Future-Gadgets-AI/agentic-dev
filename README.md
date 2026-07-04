@@ -28,6 +28,8 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 | Command | Purpose |
 |---|---|
 | `/agentic-dev:pickup #N` | Execute a `readiness:ready` issue end-to-end, headless: DoR re-check → branch → implement → verify → draft PR → blind review |
+| `/agentic-dev:recommend` | Rank which ready issue(s) to pick up next — transparent tiers, per-line rationale, read-only |
+| `/agentic-dev:needs-me` | Cross-repo digest of everything waiting on the human (reviews, decisions, ready work, drafts) |
 
 **Setup:** `/agentic-dev:init` — guided one-time bot-credential onboarding (create or wire the token, verify, store). See **Bot identity & setup** below.
 

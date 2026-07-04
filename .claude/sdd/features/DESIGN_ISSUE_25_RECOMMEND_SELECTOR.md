@@ -35,7 +35,7 @@ plugin/commands/recommend.md          (model-driven command — the only new fil
 ### Decision: tier rules are the contract, output format is presentation
 **Status:** Accepted · **Context:** anti-theater stance (DoR rubric): rationale, not scores. · **Choice:** the tier order and the "every line names its deciding tier" rule are normative; exact wording/layout may evolve. · **Consequence:** acceptance tests assert ordering + tier-attribution, not exact strings.
 
-### Decision: unblocking power = count of OPEN native sub-issues + open issues listing the candidate as parent
+### Decision: unblocking power = count of the candidate's OPEN native sub-issues
 **Status:** Accepted · **Context:** the board uses native sub-issue relationships (no "blocks" text convention). · **Choice:** one GraphQL read per candidate (`subIssues(first:50){nodes{number,state}}`); count OPEN only. · **Alternative rejected:** parsing "blocked-by" prose — no such convention on this board.
 
 ### Decision: identity = invoking user's own gh auth
