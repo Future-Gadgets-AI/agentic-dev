@@ -50,8 +50,27 @@ else
   exit 1
 fi
 
-if [ "$CURRENT_LINE" = "$TARGET_LINE" ]; then
-  echo "repo-standard-apply-codeowners: NO-OP — .github/CODEOWNERS already matches the target line."
+# Effective-rules compare, mirroring repo-standard-diff.sh: comment/blank lines
+# and owner order are cosmetic (the contract says so) — a raw byte compare would
+# rewrite every commented-but-correct file into a comment-stripping PR.
+if [ -n "$CURRENT_LINE" ] && python3 -c '
+import sys
+
+
+def rules(text):
+    out = []
+    for ln in text.splitlines():
+        s = ln.strip()
+        if not s or s.startswith("#"):
+            continue
+        parts = s.split()
+        out.append((parts[0], tuple(sorted(parts[1:]))))
+    return out
+
+
+sys.exit(0 if rules(sys.argv[1]) == rules(sys.argv[2]) else 1)
+' "$CURRENT_LINE" "$TARGET_LINE"; then
+  echo "repo-standard-apply-codeowners: NO-OP — effective CODEOWNERS rules already match the target (comments/owner order are cosmetic)."
   exit 0
 fi
 

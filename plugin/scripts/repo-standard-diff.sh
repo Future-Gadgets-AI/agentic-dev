@@ -167,6 +167,14 @@ def normalize(x):
     return json.dumps(x, sort_keys=True)
 
 
+def flag(x):  # GET returns {"enabled": bool} where the PUT payload takes a bare bool
+    return x.get("enabled") if isinstance(x, dict) and "enabled" in x else x
+
+
+def slugs(seq, key):  # GET returns object arrays where PUT takes login/slug strings
+    return [item[key] for item in seq if isinstance(item, dict) and key in item]
+
+
 # --- Pattern 1: parse the contract's JSON blocks directly (Decision D2) ---
 def block(text, heading):
     m = re.search(re.escape("## " + heading) + r"\n```json\n(.*?)\n```", text, re.DOTALL)
@@ -185,35 +193,83 @@ label_manifest = block(contract, "Label rollout manifest (target — create if m
 main_branch_exists = exists(f"repos/{repo}/branches/main")
 current_protection = get_or_empty(f"repos/{repo}/branches/main/protection")
 
-merged = dict(current_protection)
-merged["required_pull_request_reviews"] = {
-    **current_protection.get("required_pull_request_reviews", {}),
-    **protection_target["required_pull_request_reviews"],
-}
-merged["enforce_admins"] = protection_target["enforce_admins"]
-merged["allow_force_pushes"] = protection_target["allow_force_pushes"]
-merged["allow_deletions"] = protection_target["allow_deletions"]
-
-
 def workflow_file_exists(context):
     return exists(f"repos/{repo}/contents/.github/workflows/{context}.yml")
 
 
 candidate_contexts = protection_target["required_status_checks"]["contexts"]
 detected = [c for c in candidate_contexts if workflow_file_exists(c)]
-if detected:
-    existing_rsc = current_protection.get("required_status_checks", {"strict": False, "contexts": []})
-    merged["required_status_checks"] = {
-        "strict": existing_rsc.get("strict", False),
-        "contexts": sorted(set(existing_rsc.get("contexts", [])) | set(detected)),
-    }
-elif "required_status_checks" in current_protection:
-    merged["required_status_checks"] = current_protection["required_status_checks"]  # untouched
 
-managed_fields = ["required_pull_request_reviews", "enforce_admins", "allow_force_pushes", "allow_deletions"]
-if "required_status_checks" in merged:
-    managed_fields.append("required_status_checks")
-protection_diff_fields = [f for f in managed_fields if normalize(merged.get(f)) != normalize(current_protection.get(f))]
+# Drift detection compares GET shapes normalized to PUT shapes (flag()): the API
+# returns {"enabled": bool} objects where PUT takes bare booleans — a raw compare
+# false-drifts every already-hardened repo and breaks AT-1's second-run no-op.
+target_rpr = protection_target["required_pull_request_reviews"]
+current_rpr = current_protection.get("required_pull_request_reviews", {})
+current_rsc = current_protection.get("required_status_checks")
+
+if detected:
+    desired_rsc = {
+        "strict": bool((current_rsc or {}).get("strict", False)),
+        "contexts": sorted(set((current_rsc or {}).get("contexts") or []) | set(detected)),
+    }
+elif current_rsc is not None:
+    desired_rsc = {
+        "strict": bool(current_rsc.get("strict", False)),
+        "contexts": sorted(current_rsc.get("contexts") or []),
+    }  # untouched — passthrough, normalized
+else:
+    desired_rsc = None
+
+protection_diff_fields = []
+if any(current_rpr.get(k) != v for k, v in target_rpr.items()):
+    protection_diff_fields.append("required_pull_request_reviews")
+if flag(current_protection.get("enforce_admins")) != protection_target["enforce_admins"]:
+    protection_diff_fields.append("enforce_admins")
+if flag(current_protection.get("allow_force_pushes")) != protection_target["allow_force_pushes"]:
+    protection_diff_fields.append("allow_force_pushes")
+if flag(current_protection.get("allow_deletions")) != protection_target["allow_deletions"]:
+    protection_diff_fields.append("allow_deletions")
+if desired_rsc is not None and (
+    current_rsc is None
+    or bool(current_rsc.get("strict", False)) != desired_rsc["strict"]
+    or sorted(current_rsc.get("contexts") or []) != desired_rsc["contexts"]
+):
+    protection_diff_fields.append("required_status_checks")
+
+# The PUT body is built in the PUT endpoint's own schema — never the GET shape.
+# GET-only fields (required_signatures, url/*_url) are dropped; restrictions and
+# dismissal_restrictions map object arrays to login/slug strings; the four
+# top-level nullable params are always present, as the endpoint requires.
+put_rpr = {k: current_rpr[k] for k in ("require_last_push_approval",) if k in current_rpr}
+put_rpr.update(target_rpr)
+dismissal = current_rpr.get("dismissal_restrictions")
+if isinstance(dismissal, dict) and (dismissal.get("users") or dismissal.get("teams") or dismissal.get("apps")):
+    put_rpr["dismissal_restrictions"] = {
+        "users": slugs(dismissal.get("users") or [], "login"),
+        "teams": slugs(dismissal.get("teams") or [], "slug"),
+        "apps": slugs(dismissal.get("apps") or [], "slug"),
+    }
+
+current_restrictions = current_protection.get("restrictions")
+put_restrictions = None
+if isinstance(current_restrictions, dict):
+    put_restrictions = {
+        "users": slugs(current_restrictions.get("users") or [], "login"),
+        "teams": slugs(current_restrictions.get("teams") or [], "slug"),
+        "apps": slugs(current_restrictions.get("apps") or [], "slug"),
+    }
+
+put_body = {
+    "required_status_checks": desired_rsc,
+    "enforce_admins": protection_target["enforce_admins"],
+    "required_pull_request_reviews": put_rpr,
+    "restrictions": put_restrictions,
+    "allow_force_pushes": protection_target["allow_force_pushes"],
+    "allow_deletions": protection_target["allow_deletions"],
+}
+for k in ("required_linear_history", "block_creations", "required_conversation_resolution", "lock_branch", "allow_fork_syncing"):
+    if k in current_protection:
+        put_body[k] = bool(flag(current_protection[k]))  # unmanaged — preserved verbatim
 
 if not main_branch_exists:
     protection_status = "absent"
@@ -289,11 +345,25 @@ if codeowners_raw and "content" in codeowners_raw:
 else:
     current_codeowners = None
 
+def codeowners_rules(text):
+    # Effective rules only: comment/blank lines are cosmetic, and owner order
+    # within a rule is cosmetic (the contract says so) — a raw byte compare
+    # false-drifts every commented-but-correct file into a comment-stripping PR.
+    rules = []
+    for ln in (text or "").splitlines():
+        s = ln.strip()
+        if not s or s.startswith("#"):
+            continue
+        parts = s.split()
+        rules.append((parts[0], tuple(sorted(parts[1:]))))
+    return rules
+
+
 if target_codeowners is None:
     codeowners_status = "blocked_no_reviewers"
 elif current_codeowners is None:
     codeowners_status = "absent"
-elif current_codeowners == target_codeowners:
+elif codeowners_rules(current_codeowners) == codeowners_rules(target_codeowners):
     codeowners_status = "match"
 else:
     codeowners_status = "drift"
@@ -357,7 +427,7 @@ with open(os.path.join(plan_dir, "plan.json"), "w") as f:
     json.dump(plan, f, indent=2, sort_keys=True)
     f.write("\n")
 with open(os.path.join(plan_dir, "protection-put-body.json"), "w") as f:
-    json.dump(merged, f, indent=2, sort_keys=True)
+    json.dump(put_body, f, indent=2, sort_keys=True)
     f.write("\n")
 ruleset_body_path = os.path.join(plan_dir, "ruleset-post-body.json")
 if ruleset_post_body is not None:
