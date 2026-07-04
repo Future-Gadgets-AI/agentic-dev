@@ -38,9 +38,12 @@ Runs unconditionally when `plan.json`'s `codeowners.status` is not `"match"`. No
 
 If `codeowners.status` is `"blocked_no_reviewers"` (no `--reviewers` and no `AGENTIC_REVIEWERS` configured anywhere) — report `BLOCKED (no reviewers configured)` for this sub-step and continue to Labels; never guess a reviewer list.
 
-Otherwise:
+Otherwise, resolve the reviewer list once — the **same** list Phase A used: the `--reviewers` value if the invocation carried one; else extract `AGENTIC_REVIEWERS` from the bot credentials file without sourcing it (never reconstruct it by parsing `plan.json`'s composed `codeowners.target` rendering):
+
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-standard-apply-codeowners.sh" "<owner/repo>" "<space-separated reviewer logins>"
+CFG="${AGENTIC_DEV_CONFIG_DIR:-$HOME/.config/agentic-dev}/credentials"
+REVIEWERS="$(grep -E '^[[:space:]]*AGENTIC_REVIEWERS[[:space:]]*=' "$CFG" | tail -1 | sed -E 's/^[^=]*=[[:space:]]*//; s/^["'"'"']//; s/["'"'"']$//')"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-standard-apply-codeowners.sh" "<owner/repo>" "$REVIEWERS"
 ```
 It self-sources `bot-auth.sh` — if bot wiring isn't ready, it fails fast; report `BLOCKED (bot wiring absent)` with the exact fix command from its stderr.
 

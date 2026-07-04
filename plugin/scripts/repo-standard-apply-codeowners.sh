@@ -76,7 +76,22 @@ fi
 
 BRANCH="chore/codeowners-hardening"
 
-if gh api "repos/$REPO/commits?per_page=1" >/dev/null 2>&1; then
+# Emptiness detection mirrors repo-standard-diff.sh's repo_has_history(): ONLY a
+# 409 "Git Repository is empty" (or a confirmed size==0) means empty. Ambiguity
+# (rate limit, network blip) must fail fast — it must never route a populated
+# repo onto the direct-commit-to-main path.
+if gh api "repos/$REPO/commits?per_page=1" >/dev/null 2>"$SCRATCH_ERR"; then
+  REPO_EMPTY=0
+elif grep -qE "409|Git Repository is empty" "$SCRATCH_ERR" 2>/dev/null; then
+  REPO_EMPTY=1
+elif [ "$(gh api "repos/$REPO" --jq .size 2>/dev/null)" = "0" ]; then
+  REPO_EMPTY=1
+else
+  echo "repo-standard-apply-codeowners: could not determine commit history for $REPO: $(tail -1 "$SCRATCH_ERR" 2>/dev/null)" >&2
+  exit 1
+fi
+
+if [ "$REPO_EMPTY" -eq 0 ]; then
   # --- has history: deterministic branch + draft PR, never a direct push to main ---
   existing_pr_url="$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json url --jq '.[0].url // empty' 2>/dev/null)"
   if [ -n "$existing_pr_url" ]; then

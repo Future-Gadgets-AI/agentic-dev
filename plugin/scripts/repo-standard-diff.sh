@@ -209,7 +209,9 @@ current_rsc = current_protection.get("required_status_checks")
 
 if detected:
     desired_rsc = {
-        "strict": bool((current_rsc or {}).get("strict", False)),
+        # strict is a managed field — the contract declares it, so assert it
+        # (a passthrough here would silently unenforce the contract's own line)
+        "strict": bool(protection_target["required_status_checks"].get("strict", False)),
         "contexts": sorted(set((current_rsc or {}).get("contexts") or []) | set(detected)),
     }
 elif current_rsc is not None:
