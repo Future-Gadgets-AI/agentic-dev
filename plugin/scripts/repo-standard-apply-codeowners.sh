@@ -84,28 +84,58 @@ if gh api "repos/$REPO/commits?per_page=1" >/dev/null 2>&1; then
     exit 0
   fi
 
+  REUSE_BRANCH=0
   if gh api "repos/$REPO/git/ref/heads/$BRANCH" >/dev/null 2>&1; then
-    echo "repo-standard-apply-codeowners: branch '$BRANCH' already exists on $REPO with no open PR from it — local branch name conflict (diverged history). Resolving this is a human step." >&2
-    exit 1
+    # An interrupted earlier run can leave the branch (commit landed, PR not yet
+    # opened). Self-heal ONLY when the branch already carries the target rules —
+    # any other pre-existing branch stays a human step.
+    BRANCH_B64="$(gh api "repos/$REPO/contents/.github/CODEOWNERS?ref=$BRANCH" --jq '.content' 2>/dev/null | tr -d '\n')"
+    BRANCH_CONTENT=""
+    [ -n "$BRANCH_B64" ] && BRANCH_CONTENT="$(python3 -c 'import base64,sys; print(base64.b64decode(sys.argv[1]).decode("utf-8").strip())' "$BRANCH_B64")"
+    if [ -n "$BRANCH_CONTENT" ] && python3 -c '
+import sys
+
+
+def rules(text):
+    out = []
+    for ln in text.splitlines():
+        s = ln.strip()
+        if not s or s.startswith("#"):
+            continue
+        parts = s.split()
+        out.append((parts[0], tuple(sorted(parts[1:]))))
+    return out
+
+
+sys.exit(0 if rules(sys.argv[1]) == rules(sys.argv[2]) else 1)
+' "$BRANCH_CONTENT" "$TARGET_LINE"; then
+      echo "repo-standard-apply-codeowners: branch '$BRANCH' already carries the target rules (interrupted earlier run) — reusing it and opening the PR."
+      REUSE_BRANCH=1
+    else
+      echo "repo-standard-apply-codeowners: branch '$BRANCH' already exists on $REPO with different content and no open PR — resolving it is a human step." >&2
+      exit 1
+    fi
   fi
 
-  main_sha="$(gh api "repos/$REPO/git/ref/heads/main" --jq .object.sha 2>/dev/null)" || {
-    echo "repo-standard-apply-codeowners: cannot resolve main's HEAD sha on $REPO." >&2
-    exit 1
-  }
+  if [ "$REUSE_BRANCH" -eq 0 ]; then
+    main_sha="$(gh api "repos/$REPO/git/ref/heads/main" --jq .object.sha 2>/dev/null)" || {
+      echo "repo-standard-apply-codeowners: cannot resolve main's HEAD sha on $REPO." >&2
+      exit 1
+    }
 
-  gh api --method POST "repos/$REPO/git/refs" -f ref="refs/heads/$BRANCH" -f sha="$main_sha" >/dev/null || {
-    echo "repo-standard-apply-codeowners: could not create branch '$BRANCH' on $REPO." >&2
-    exit 1
-  }
+    gh api --method POST "repos/$REPO/git/refs" -f ref="refs/heads/$BRANCH" -f sha="$main_sha" >/dev/null || {
+      echo "repo-standard-apply-codeowners: could not create branch '$BRANCH' on $REPO." >&2
+      exit 1
+    }
 
-  content_b64="$(printf '%s\n' "$TARGET_LINE" | base64 | tr -d '\n')"
-  gh api --method PUT "repos/$REPO/contents/.github/CODEOWNERS" \
-    -f message="chore: add CODEOWNERS (repo hardening)" \
-    -f content="$content_b64" -f branch="$BRANCH" >/dev/null || {
-    echo "repo-standard-apply-codeowners: could not commit CODEOWNERS to '$BRANCH' on $REPO." >&2
-    exit 1
-  }
+    content_b64="$(printf '%s\n' "$TARGET_LINE" | base64 | tr -d '\n')"
+    gh api --method PUT "repos/$REPO/contents/.github/CODEOWNERS" \
+      -f message="chore: add CODEOWNERS (repo hardening)" \
+      -f content="$content_b64" -f branch="$BRANCH" >/dev/null || {
+      echo "repo-standard-apply-codeowners: could not commit CODEOWNERS to '$BRANCH' on $REPO." >&2
+      exit 1
+    }
+  fi
 
   pr_body="$(printf 'Repo hardening: codify `.github/CODEOWNERS` per `plugin/contracts/repo-standard.md`.\n\n[no-close: repo-hardening bootstrap — no tracking issue on %s]\n' "$REPO")"
 
