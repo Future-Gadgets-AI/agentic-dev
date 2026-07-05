@@ -1,12 +1,29 @@
 #!/usr/bin/env bash
-# repo-standard-apply-codeowners.sh OWNER/REPO "reviewer1 reviewer2 ..."
+# repo-standard-apply-codeowners.sh OWNER/REPO --reviewers "reviewer1 reviewer2 ..." --confirmed
 #
 # Phase A2 of /harden-repo: write .github/CODEOWNERS so it lists every given
-# reviewer login. No confirmation gate (Decision D9 — fully reversible: a PR
-# still needs a human merge regardless, and a direct commit on a repo with
-# zero prior history disturbs nothing). Idempotent either way (Decision D8):
-# no-op if current content already equals the target line; an already-open
-# PR from the deterministic branch is reused, never duplicated.
+# reviewer login. `--confirmed` is REQUIRED, but it is not a new human-safety
+# gate (Decision D9 — fully reversible: a PR still needs a human merge
+# regardless, and a direct commit on a repo with zero prior history disturbs
+# nothing, both stay true). The flag exists purely so this script's CLI shape
+# matches apply-labels.sh's (OWNER/REPO ... --confirmed) — interface
+# consistency across the repo-standard-*.sh family (see #66), not a gate the
+# caller must earn. Idempotent either way (Decision D8): no-op if current
+# content already equals the target line; an already-open PR from the
+# deterministic branch is reused, never duplicated.
+#
+# Argument validation — ALL of the below happens before bot-auth.sh is
+# sourced (sourcing it already performs network calls of its own: `gh auth
+# setup-git`, `gh api user`), so a bad invocation never touches the network:
+#   - OWNER/REPO positional required.
+#   - --reviewers "..." and --confirmed both required, order-independent;
+#     any other argument is an unknown-argument usage error.
+#   - --reviewers's value is split on whitespace; the resulting list must be
+#     non-empty, and no token may start with "-" — a flag silently absorbed
+#     as an owner handle (e.g. `apply-codeowners.sh OWNER/REPO --confirmed`
+#     alone, the original #66 bug) is exactly the mistake this closes.
+#   - API-based existence-checking of the handles themselves is out of scope
+#     (offline, syntactic validation only).
 #
 # Runs as the BOT: self-sources bot-auth.sh (fail-fast, structural — Decision
 # D6). Pure `gh api` (Contents + Git Data API) for BOTH the empty-repo direct
@@ -15,8 +32,47 @@
 # introducing a filesystem side effect this script would otherwise not need.
 set -uo pipefail
 
-REPO="${1:?usage: repo-standard-apply-codeowners.sh OWNER/REPO \"reviewer1 reviewer2 ...\"}"
-REVIEWERS="${2:?usage: repo-standard-apply-codeowners.sh OWNER/REPO \"reviewer1 reviewer2 ...\"}"
+REPO="${1:?usage: repo-standard-apply-codeowners.sh OWNER/REPO --reviewers \"reviewer1 reviewer2 ...\" --confirmed}"
+shift || true
+
+REVIEWERS=""
+CONFIRMED=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --reviewers) shift; REVIEWERS="${1:?--reviewers needs a value}" ;;
+    --confirmed) CONFIRMED=1 ;;
+    *)
+      echo "repo-standard-apply-codeowners: unknown argument: $1" >&2
+      exit 1
+      ;;
+  esac
+  shift || true
+done
+
+[ "$CONFIRMED" -eq 1 ] || {
+  echo "repo-standard-apply-codeowners: refusing — missing --confirmed (the confirmation gate is the caller's job)." >&2
+  exit 1
+}
+
+[ -n "$REVIEWERS" ] || {
+  echo "repo-standard-apply-codeowners: refusing — missing --reviewers (a space-separated list of GitHub logins is required)." >&2
+  exit 1
+}
+
+REVIEWER_COUNT=0
+for r in $REVIEWERS; do
+  case "$r" in
+    -*)
+      echo "repo-standard-apply-codeowners: refusing — reviewer token '$r' looks like a flag (starts with '-'), not a GitHub login." >&2
+      exit 1
+      ;;
+  esac
+  REVIEWER_COUNT=$((REVIEWER_COUNT + 1))
+done
+[ "$REVIEWER_COUNT" -gt 0 ] || {
+  echo "repo-standard-apply-codeowners: no reviewers resolved — refusing to write an empty CODEOWNERS rule." >&2
+  exit 1
+}
 
 command -v python3 >/dev/null 2>&1 || {
   echo "repo-standard-apply-codeowners: python3 is required (decodes the current CODEOWNERS content) and is not on PATH." >&2

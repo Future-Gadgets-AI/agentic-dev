@@ -43,8 +43,10 @@ Otherwise, resolve the reviewer list once — the **same** list Phase A used: th
 ```bash
 CFG="${AGENTIC_DEV_CONFIG_DIR:-$HOME/.config/agentic-dev}/credentials"
 REVIEWERS="$(grep -E '^[[:space:]]*AGENTIC_REVIEWERS[[:space:]]*=' "$CFG" | tail -1 | sed -E 's/^[^=]*=[[:space:]]*//; s/^["'"'"']//; s/["'"'"']$//')"
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-standard-apply-codeowners.sh" "<owner/repo>" "$REVIEWERS"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-standard-apply-codeowners.sh" "<owner/repo>" --reviewers "$REVIEWERS" --confirmed
 ```
+`--confirmed` here is a required literal for the script's own CLI interface (unifying its shape with `apply-labels.sh`'s — Decision D9), not a human-facing prompt — this sub-step's gate stays `NONE`, unchanged.
+
 It self-sources `bot-auth.sh` — if bot wiring isn't ready, it fails fast; report `BLOCKED (bot wiring absent)` with the exact fix command from its stderr.
 
 **Report block:**
