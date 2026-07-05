@@ -149,6 +149,43 @@ Reviewers come from the tool's `--reviewers` argument, defaulting to `AGENTIC_RE
 Any ONE listed reviewer satisfies "Require review from Code Owners" — order is cosmetic.
 Observed live example (agentic-dev, exported 2026-07-04): `* @gustavomoura628 @lucasbrandao4770 @thallersubtil`
 
+## repo-standard-*.sh family — CLI convention
+
+All three `repo-standard-*.sh` scripts share one invocation shape: a required positional
+`OWNER/REPO` first, then named flags, order-independent. This section is the single source of
+truth for that shape — do not re-derive it from any one script's own comments.
+
+| Script                                | Positional   | Flags                                                      | `--confirmed`        | `--reviewers`                                                          |
+|----------------------------------------|--------------|--------------------------------------------------------------|-----------------------|--------------------------------------------------------------------------|
+| `repo-standard-diff.sh`                | `OWNER/REPO` | `--reviewers "..."` (optional)                                | n/a — read-only, nothing to gate | optional; **falls back** to `AGENTIC_REVIEWERS` from the bot credentials file when omitted |
+| `repo-standard-apply-codeowners.sh`    | `OWNER/REPO` | `--reviewers "..."` (required), `--confirmed` (required)      | **required**          | **required** — never defaults from credentials                           |
+| `repo-standard-apply-labels.sh`        | `OWNER/REPO` | `--confirmed` (required)                                      | **required**          | n/a — no reviewer concept                                                 |
+
+**The `--reviewers` asymmetry is deliberate, not a bug.** `repo-standard-diff.sh` is read-only — it
+never writes anything, so a convenience default (falling back to `AGENTIC_REVIEWERS` when
+`--reviewers` is omitted) carries no risk of an unintended write. `repo-standard-apply-codeowners.sh`
+performs real writes (a direct commit or a branch + PR) — it never resolves a reviewer list on the
+caller's behalf; the caller (`/harden-repo`) must pass `--reviewers` explicitly, every time. Do not
+"fix" this asymmetry by adding a credential fallback to the apply script, and do not remove
+`diff.sh`'s fallback for "consistency" — they serve different modes (read vs. write) on purpose.
+
+**`--confirmed` is required by both apply scripts** (`apply-codeowners.sh`, `apply-labels.sh`) —
+never optional, never defaulted. It is a CLI-interface consistency marker across the family, not by
+itself a human-safety gate: for `apply-labels.sh`, the actual human confirmation happens one layer
+up, in `/harden-repo`'s Phase B prompt; for `apply-codeowners.sh` there has never been a human gate
+at this sub-step (Decision D9 — full reversibility makes one unnecessary) and `--confirmed` does not
+add one. Either way, the script itself never prompts — the caller decides; the script only refuses
+to run silently un-confirmed.
+
+**Owner-handle validation** (`apply-codeowners.sh` only, offline, before any network call): the
+`--reviewers` value is split on whitespace; the resulting list must be non-empty, and no token may
+start with `-` (a flag silently absorbed as an owner handle — e.g. invoking with `--confirmed` where
+`--reviewers` was expected — is exactly the bug this rule closes; see #66). Both checks fail with a
+usage error and a non-zero exit **before** `bot-auth.sh` is sourced, since sourcing it already
+performs network calls (`gh auth setup-git`, `gh api user`) independent of the target repo.
+API-based existence verification of the handles themselves is explicitly out of scope — this is
+offline, syntactic validation only.
+
 ## Bot wiring — pointer (never re-derive credential logic here)
 Source of truth: `plugin/skills/init/SKILL.md` (guided) + `plugin/scripts/setup-bot.sh` /
 `bot-auth.sh` (mechanics). Readiness for a target repo = local credentials exist AND
