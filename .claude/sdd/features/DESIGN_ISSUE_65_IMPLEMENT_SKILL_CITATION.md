@@ -46,10 +46,13 @@ code, no other files touched):
   cite their source issue directly in the header blockquote ("Phase 2 (DESIGN) artifact for issue
   #NN"), and neither carries a `DEFINE` metadata-table row at all. (The earlier
   `DESIGN_ISSUE_34`/`36` template did carry one, pointed at `../_synthesized/...` — that row is
-  exactly where the dead link lived.) This design follows that same structural fix — no
-  metadata-table row to point anywhere, full stop — rather than inventing a third citation style.
-  This issue's job is to encode that already-proven practice into the skill's own instructions, so
-  it's guaranteed on every future run rather than incidental to whoever remembers.
+  exactly where the dead link lived.) This design keeps that structural fix — no
+  metadata-table row pointing at a synthesized path — and goes one deliberate step further than
+  #70/#71's incidental blockquote mention: an explicit, labeled `Requirements source:` header line,
+  the same shape the new Step 1 template mandates for the DEFINE header, so the citation is a
+  greppable field rather than prose a reviewer has to hunt for. This issue's job is to encode the
+  already-proven cite-the-issue practice into the skill's own instructions, so it's guaranteed on
+  every future run rather than incidental to whoever remembers.
 - **Confirmed defect evidence, already committed in this repo** (predating the PR #70/#71 practice
   above): `.claude/sdd/features/DESIGN_ISSUE_34_WHATS_NEEDED_ME.md` and
   `.claude/sdd/features/DESIGN_ISSUE_36_REPO_HARDENING.md` both cite
