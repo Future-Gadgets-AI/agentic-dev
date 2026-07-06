@@ -49,21 +49,33 @@ grep -qxF '.claude/sdd/_synthesized/' .gitignore 2>/dev/null || \
 
 Write the synthesized doc to `.claude/sdd/_synthesized/DEFINE_<SLUG>.md` — `SLUG` = a short, stable, readable tag such as `ISSUE_<N>_<UPPER_SNAKE first few words of the title>` (e.g. issue #52 → `ISSUE_52_IMPLEMENT_SKILL`; the exact casing isn't load-bearing, only stability across this run is). This is the throwaway half of the artifact split — see **Artifact placement**.
 
+The doc's header **must** carry a required `Source issue` field — `owner/repo#N` plus the issue's title, copied verbatim from the issue you're implementing (never invented, never left out):
+
+```markdown
+# DEFINE — <short, human-readable title>
+
+**Source issue:** `<owner>/<repo>#<N>` — <issue title, verbatim>
+```
+
+This field is the one durable, reviewable anchor Step 2 and Step 3 read back out, so the committed `DESIGN_<SLUG>.md` / `BUILD_REPORT_<SLUG>.md` they produce can cite **the issue** — not this gitignored file — as their requirements source. This file lives under `.claude/sdd/_synthesized/`, unreachable from a fresh clone; the issue is the durable record a reviewer can actually open.
+
 ## Step 2 — Invoke design, headlessly
 
 Call the Step 0 design entrypoint with the Step 1 file as its input:
 - **Skill surface** → call it with the Step 1 file's path as the argument.
-- **Agent-only surface** → spawn it (never `subagent_type: fork` — this is a fresh phase run, not a continuation of your context), briefing it with the file path and "run headlessly, do not ask questions."
+- **Agent-only surface** → spawn it (never `subagent_type: fork` — this is a fresh phase run, not a continuation of your context), briefing it with the file path, "run headlessly, do not ask questions," and — since an agent-only surface has no guaranteed read of this skill's own file conventions — restate the citation requirement below explicitly in that briefing, rather than assuming it travels with the file.
+
+**Citation requirement (either surface):** the design phase's own `DESIGN_<SLUG>.md` must cite **the source issue** — the `Source issue` field carried in the Step 1 file's header (`owner/repo#N` + title) — as its requirements source, never `.claude/sdd/_synthesized/DEFINE_<SLUG>.md`'s own path. That file is gitignored and unreachable from a fresh clone; citing it leaves a reviewer checking out the branch with a dead link — the exact defect this rule exists to close.
 
 If both surfaces resolved in Step 0, prefer the skill surface — it keeps artifact capture in the main conversation.
 
-It writes its artifact to `.claude/sdd/features/DESIGN_<SLUG>.md` — this project's fixed SDD working-area convention, independent of which plugin is providing the phase. Capture the path (if it reports a different one, use that instead and note the deviation) and skim it for the inline decisions it recorded — you'll want the highlights for the PR body later.
+It writes its artifact to `.claude/sdd/features/DESIGN_<SLUG>.md` — this project's fixed SDD working-area convention, independent of which plugin is providing the phase. Capture the path (if it reports a different one, use that instead and note the deviation), skim it for the inline decisions it recorded — you'll want the highlights for the PR body later — and confirm its citation names the issue, not this skill's synthesized file, while you're in there.
 
 If design itself can't produce an artifact — a genuine gap even the DoR-passed issue didn't cover — that's a blocker, not a silent stop: record it and produce a Blocked report rather than improvising a design yourself.
 
 ## Step 3 — Invoke build, headlessly
 
-Call the Step 0 build entrypoint the same way, with the Step 2 design artifact as its input. It writes code per the design's file manifest, plus `.claude/sdd/reports/BUILD_REPORT_<SLUG>.md`.
+Call the Step 0 build entrypoint the same way, with the Step 2 design artifact as its input — including, for an agent-only surface, restating the citation requirement in its briefing, exactly as Step 2 does. It writes code per the design's file manifest, plus `.claude/sdd/reports/BUILD_REPORT_<SLUG>.md`, which carries the same citation requirement as the DESIGN artifact: it must cite **the source issue** (`owner/repo#N` + title, from the Step 1 file's header) as its requirements source, never `.claude/sdd/_synthesized/DEFINE_<SLUG>.md`'s own path.
 
 Build runs autonomously by its own nature — a decision fork it hits gets resolved and logged into its own report, never escalated back through you. Your job is to let it run and then read what it produced, not to re-decide on its behalf.
 
@@ -117,6 +129,7 @@ ADR-0008 hasn't yet settled *where* this line ultimately lives (PR body vs. comm
    - the resolved `BUILD_REPORT_<SLUG>.md` status field;
    - `git status --short` showing the code changes plus the two committed artifacts, with the synthesized input absent;
    - `git check-ignore -v .claude/sdd/_synthesized/DEFINE_<SLUG>.md` (expect: matched) **and** `git check-ignore -v .claude/sdd/features/DESIGN_<SLUG>.md` (expect: not matched) — this is what actually proves the committed/gitignored split, not just the `.gitignore` file's text.
+   - `grep -n "Source issue" .claude/sdd/_synthesized/DEFINE_<SLUG>.md` (expect: one match) **and** `grep -rn "_synthesized" .claude/sdd/features/DESIGN_<SLUG>.md .claude/sdd/reports/BUILD_REPORT_<SLUG>.md` (expect: no matches) — proves the citation rule end to end: both committed artifacts name the source issue, neither leaks a reference to this gitignored file.
 4. Paste the full transcript (commands + output, including the Blocked path if you deliberately trigger one by renaming a plugin) as the smoke evidence.
 
 ## Scope
@@ -126,6 +139,6 @@ ADR-0008 hasn't yet settled *where* this line ultimately lives (PR body vs. comm
 
 ## DOs / DON'Ts
 
-**DO:** resolve the design/build entrypoints fresh every run, by matching what's actually available · treat a missing or interactive-only phase as a stop, not a workaround · assemble the design-input from the issue's own DoR content, never invent requirements · keep the native DESIGN/BUILD_REPORT as the full record and the summary as the handback contract · gitignore only the synthesized input.
+**DO:** resolve the design/build entrypoints fresh every run, by matching what's actually available · treat a missing or interactive-only phase as a stop, not a workaround · assemble the design-input from the issue's own DoR content, never invent requirements · keep the native DESIGN/BUILD_REPORT as the full record and the summary as the handback contract · gitignore only the synthesized input · require the source issue (never the synthesized file) as the cited requirements source in both DESIGN and BUILD_REPORT.
 
-**DON'T:** hardcode a plugin namespace (e.g. `agentspec:...`) as if it's the only possible one · run brainstorm/define/ship · let build's autonomous decisions become questions back to you · round a Blocked or partially-failing build report up to "done" · commit the synthesized design-input.
+**DON'T:** hardcode a plugin namespace (e.g. `agentspec:...`) as if it's the only possible one · run brainstorm/define/ship · let build's autonomous decisions become questions back to you · round a Blocked or partially-failing build report up to "done" · commit the synthesized design-input · let a committed artifact cite `_synthesized/DEFINE_<SLUG>.md`'s own path as its requirements source.
