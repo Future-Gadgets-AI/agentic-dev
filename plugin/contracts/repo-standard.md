@@ -186,6 +186,37 @@ performs network calls (`gh auth setup-git`, `gh api user`) independent of the t
 API-based existence verification of the handles themselves is explicitly out of scope — this is
 offline, syntactic validation only.
 
+## Free-plan carve-out — private repos cannot assert protection/rulesets
+
+A **private** repository on the org's **free** GitHub plan cannot enable branch protection or
+repository rulesets — a GitHub plan-tier limitation, not a bug in this tool or a choice this
+contract makes. Discovered hardening the private `second-brain` repo (private by design — it holds
+personal client-derived data).
+
+**What still applies** (no plan gating on either — both are bot-driven writes via the Contents/Git
+Data API): **labels** (`Label rollout manifest` above) and **CODEOWNERS** (`CODEOWNERS — format`
+above). Run these sub-steps normally on a private free-plan repo.
+
+**What cannot be asserted**: **branch protection** and the **branch-naming ruleset** (the `Branch
+protection` / `Branch-naming ruleset` sections above). GitHub's exact, observed behavior on both
+endpoints for this repo shape: `HTTP 403`, body containing `Upgrade to GitHub Pro or make this
+repository public`. `repo-standard-diff.sh` classifies this specific 403 shape as its own outcome
+(`na_plan_limitation`) — distinct from genuine absence (an empty/`{}`/`[]` result from a 404, never
+a 403) and never routed into the script's hard-fail path. In spirit this is the same restraint as
+Decision D4 (never asserted/overwritten beyond the managed fields) and the ruleset-DRIFT row of
+`DESIGN_ISSUE_36`'s Error Handling table (never auto-modified): the tool observes and reports what
+the platform (or an existing rule) allows, rather than forcing a state.
+
+**Mandated fallback**: **process enforcement** — bot-authored PRs plus human merges (the same
+discipline the org's A2A workflow already runs under) stands in for the missing technical
+guardrail. **And**: add a note to the *target* repo's own README documenting the residual risk (no
+branch protection/ruleset on this repo; merges are enforced by process, not by GitHub) — visible to
+anyone working in that repo, not only recorded here.
+
+**Explicitly out of scope** (not this contract's job to do or recommend as a default action):
+paying for a paid GitHub plan, and making a data-bearing private repo public. Either remains a
+human, case-by-case decision about the target repo, never an automated fallback this tool takes.
+
 ## Bot wiring — pointer (never re-derive credential logic here)
 Source of truth: `plugin/skills/init/SKILL.md` (guided) + `plugin/scripts/setup-bot.sh` /
 `bot-auth.sh` (mechanics). Readiness for a target repo = local credentials exist AND

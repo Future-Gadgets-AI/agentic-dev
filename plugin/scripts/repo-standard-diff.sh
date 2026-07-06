@@ -18,6 +18,15 @@
 # single command only (never exported, never printed, unset immediately after
 # — same technique fine-grained-pat.md's own sanity check uses).
 #
+# Free-plan carve-out (see plugin/contracts/repo-standard.md, "Free-plan
+# carve-out" section): a private repo on the org's free plan 403s on the
+# branch-protection and rulesets-list GETs, body naming the upgrade
+# requirement. That specific 403 shape is classified as its own outcome —
+# protection.status / ruleset.status == "na_plan_limitation" in plan.json,
+# reported as "N/A (plan limitation)" — never conflated with a genuine 404
+# absence, never routed into this script's hard-fail path. Any OTHER 403
+# still hard-fails exactly as before (never classify by status code alone).
+#
 # Writes (as data, never as GitHub state):
 #   ${TMPDIR:-/tmp}/agentic-dev/repo-standard/<owner>__<repo>/
 #     plan.json                  — full machine-readable diff (read by every later phase)
@@ -136,21 +145,49 @@ def is_missing(err):
     return "HTTP 404" in err or "Not Found" in err
 
 
-def get_or_empty(path):  # -> dict, {} on 404, hard-fail otherwise
+def is_plan_limited(err):
+    # Free-plan/private-repo carve-out (contract: "Free-plan carve-out"
+    # section, repo-standard.md) — GitHub returns HTTP 403 with a body naming
+    # the upgrade requirement on branch-protection/rulesets endpoints for a
+    # private repo on the org's free plan. Matched on BOTH the 403 status AND
+    # this specific body text — NEVER classify a 403 by status code alone;
+    # any other 403 (different or absent body text) must still hard-fail via
+    # the callers' existing sys.exit path, unchanged.
+    return "HTTP 403" in err and "upgrade to github pro" in err.lower()
+
+
+class PlanLimited(Exception):
+    """Raised by get_or_empty/get_list_or_empty when a GET 403s with the
+    free-plan carve-out shape (is_plan_limited). Only the two call sites that
+    need this distinct outcome (branch protection, rulesets list) catch it;
+    every other call site deliberately does not, so an unexpected occurrence
+    elsewhere still surfaces loudly (uncaught -> non-zero exit) instead of
+    being silently absorbed."""
+
+    def __init__(self, err):
+        self.err = err.strip()
+        super().__init__(self.err)
+
+
+def get_or_empty(path):  # -> dict; {} on 404; raises PlanLimited on the carve-out 403; hard-fail otherwise
     ok, out, err = gh(path)
     if ok:
         return json.loads(out) if out.strip() else {}
     if is_missing(err):
         return {}
+    if is_plan_limited(err):
+        raise PlanLimited(err)
     sys.exit(f"repo-standard-diff: GET {path} failed: {err.strip()}")
 
 
-def get_list_or_empty(path):  # -> list, [] on 404, hard-fail otherwise
+def get_list_or_empty(path):  # -> list; [] on 404; raises PlanLimited on the carve-out 403; hard-fail otherwise
     ok, out, err = gh(path)
     if ok:
         return json.loads(out) if out.strip() else []
     if is_missing(err):
         return []
+    if is_plan_limited(err):
+        raise PlanLimited(err)
     sys.exit(f"repo-standard-diff: GET {path} failed: {err.strip()}")
 
 
@@ -191,7 +228,12 @@ label_manifest = block(contract, "Label rollout manifest (target — create if m
 
 # --- branch protection: read-merge-write, never a blind PUT (Decision D4/D5, Pattern 2) ---
 main_branch_exists = exists(f"repos/{repo}/branches/main")
-current_protection = get_or_empty(f"repos/{repo}/branches/main/protection")
+protection_plan_limited = None
+try:
+    current_protection = get_or_empty(f"repos/{repo}/branches/main/protection")
+except PlanLimited as e:
+    current_protection = {}
+    protection_plan_limited = e.err
 
 def workflow_file_exists(context):
     return exists(f"repos/{repo}/contents/.github/workflows/{context}.yml")
@@ -273,7 +315,14 @@ for k in ("required_linear_history", "block_creations", "required_conversation_r
     if k in current_protection:
         put_body[k] = bool(flag(current_protection[k]))  # unmanaged — preserved verbatim
 
-if not main_branch_exists:
+if protection_plan_limited is not None:
+    # Takes priority over every branch below: a 403 on THIS endpoint is a
+    # definitive plan-tier signal, independent of whether `main` exists or
+    # what an (empty-by-necessity) current_protection would otherwise imply.
+    protection_status = "na_plan_limitation"
+    protection_blocked_on = None
+    protection_diff_fields = []
+elif not main_branch_exists:
     protection_status = "absent"
     protection_blocked_on = "codeowners"  # A2 creates `main` on a genuinely empty repo (Decision D7)
     protection_diff_fields = ["all"]
@@ -289,7 +338,12 @@ else:
     protection_blocked_on = None
 
 # --- branch-naming ruleset: create only if none exists targeting branch creation ---
-rulesets_list = get_list_or_empty(f"repos/{repo}/rulesets")
+ruleset_plan_limited = None
+try:
+    rulesets_list = get_list_or_empty(f"repos/{repo}/rulesets")
+except PlanLimited as e:
+    rulesets_list = []
+    ruleset_plan_limited = e.err
 branch_target_summaries = [r for r in rulesets_list if r.get("target") == "branch"]
 
 
@@ -311,7 +365,11 @@ for summary in branch_target_summaries:
         creation_ruleset = detail
         break
 
-if creation_ruleset is None:
+if ruleset_plan_limited is not None:
+    ruleset_status = "na_plan_limitation"
+    ruleset_diff_fields = []
+    ruleset_post_body = None
+elif creation_ruleset is None:
     ruleset_status = "absent"
     ruleset_diff_fields = ["all"]
     ruleset_post_body = dict(ruleset_target)
@@ -416,10 +474,12 @@ plan = {
         "main_branch_exists": main_branch_exists,
         "blocked_on": protection_blocked_on,
         "diff_fields": protection_diff_fields,
+        "reason": protection_plan_limited,
     },
     "ruleset": {
         "status": ruleset_status,
         "diff_fields": ruleset_diff_fields,
+        "reason": ruleset_plan_limited,
     },
     "required_checks_detected": detected,
 }
@@ -463,17 +523,25 @@ lines.append(f"  current: {current_codeowners!r}")
 lines.append(f"  target:  {target_codeowners!r}")
 lines.append(f"  repo_has_history: {repo_has_history_flag}\n")
 
+status_display = {"match": "MATCH", "absent": "ABSENT", "drift": "DRIFT", "na_plan_limitation": "N/A (plan limitation)"}
+protection_status_display = status_display[protection_status]
+ruleset_status_display = status_display[ruleset_status]
+
 lines.append("## Branch protection")
-lines.append(f"Status: {protection_status.upper()}" + (f" (blocked on: {protection_blocked_on})" if protection_blocked_on else ""))
+lines.append(f"Status: {protection_status_display}" + (f" (blocked on: {protection_blocked_on})" if protection_blocked_on else ""))
 lines.append(f"  main_branch_exists: {main_branch_exists}")
 if protection_diff_fields:
     lines.append(f"  diff fields: {', '.join(protection_diff_fields)}")
+if protection_status == "na_plan_limitation":
+    lines.append(f"  reason: {protection_plan_limited}")
 lines.append(f"  required checks detected (workflow file present): {detected or 'none'}\n")
 
 lines.append("## Branch-naming ruleset")
-lines.append(f"Status: {ruleset_status.upper()}")
+lines.append(f"Status: {ruleset_status_display}")
 if ruleset_diff_fields:
     lines.append(f"  diff fields: {', '.join(ruleset_diff_fields)}")
+if ruleset_status == "na_plan_limitation":
+    lines.append(f"  reason: {ruleset_plan_limited}")
 lines.append("")
 
 lines.append("## Summary")
@@ -483,7 +551,7 @@ lines.append(f"| Labels                  | bot                       | {'MATCH' 
 codeowners_report_status = {"match": "MATCH", "absent": "ABSENT", "drift": "DRIFT", "blocked_no_reviewers": "BLOCKED (no reviewers configured)"}[codeowners_status]
 lines.append(f"| CODEOWNERS              | bot                       | {codeowners_report_status} |")
 lines.append(f"| Bot wiring              | —                         | {'READY' if bot_wiring['ready'] else 'NOT WIRED'} |")
-lines.append(f"| Protection + ruleset    | ambient (not yet asserted)| {protection_status.upper()} / {ruleset_status.upper()} |")
+lines.append(f"| Protection + ruleset    | ambient (not yet asserted)| {protection_status_display} / {ruleset_status_display} |")
 lines.append("")
 lines.append(f"Writes performed: 0 (verify mode — read-only). Plan dir: {plan_dir}")
 
