@@ -28,7 +28,7 @@ A non-zero exit means Phase A itself failed (bad repo, no read access, malformed
 
 **Present the report verbatim as your reply.** Every later phase and the final report read their inputs from this run's `plan.json` — never recompute a diff by a different path (e.g. do not re-run `gh api` yourself to "double check"; if you suspect the plan is stale, re-run Phase A instead).
 
-**Verify mode (no `--apply`) stops here.** Render the Final report below with every `Status` limited to `MATCH`/`DRIFT`/`ABSENT`/`BLOCKED`, footer `Writes performed: 0 (verify mode — read-only).` Leave the plan directory in place — nothing outside it was written, and a later `--apply` run (or a fresh Phase A run) can reuse or overwrite it.
+**Verify mode (no `--apply`) stops here.** Render the Final report below with every `Status` limited to `MATCH`/`DRIFT`/`ABSENT`/`BLOCKED`/`N/A (plan limitation)` (the last is Protection/ruleset-only — see `plan.json`'s `protection.status`/`ruleset.status` == `na_plan_limitation`), footer `Writes performed: 0 (verify mode — read-only).` Leave the plan directory in place — nothing outside it was written, and a later `--apply` run (or a fresh Phase A run) can reuse or overwrite it.
 
 **Apply mode continues below, strictly in order: A2 (CODEOWNERS) → B (Labels) → Bot wiring (report only) → C (Protection + Ruleset).**
 
@@ -184,7 +184,7 @@ Changed:
 Writes performed: <N> | Confirmations: <granted>/<asked> granted | Mode: <verify|apply>
 ```
 
-Verify mode: every `Status` is `MATCH`/`DRIFT`/`ABSENT`/`BLOCKED`; footer `Writes performed: 0 (verify mode — read-only).`
+Verify mode: every `Status` is `MATCH`/`DRIFT`/`ABSENT`/`BLOCKED`/`N/A (plan limitation)` (Protection/ruleset-only); footer `Writes performed: 0 (verify mode — read-only).`
 
 `<asked>` counts only the gates actually presented in this run (up to 2: Labels, Protection+ruleset) — a gate that never needed to ask because it was already a `NO-OP` doesn't count as "asked."
 
