@@ -20,6 +20,8 @@ Draft/Refinement ──DoR──> Ready ──/pickup──> In Progress ──>
 
 **Readiness** (`readiness:draft | needs-refinement | ready`) is an orthogonal dimension that gates Draft→Ready; scheduling (backlog vs active) is orthogonal again. An issue's state is encoded in its `phase:` × `readiness:` × `status:` labels. (A GitHub Projects board *can't* make columns from labels — it surfaces these as columns via a single-select **Status** field that mirrors them; that mapping is designed in #19.)
 
+**PR status.** Every PR the engine opens is a **draft** by default; the Review row's blind-review runs against that draft, and draft status there is expected, not a finding. The human flips it ready and merges — one action, not two — at Ready-to-merge (`plugin/contracts/lifecycle.md`).
+
 ## The gates
 - **Definition-of-Ready gate** (`plugin/contracts/dor-rubric.md`, ADR-0004) — the DoR defines the Draft→Ready boundary; `/pickup` re-checks it before starting work, keyed to **reversibility × blast-radius, not model confidence**. Verdicts: READY / READY-WITH-LOGGED-ASSUMPTIONS / NOT-READY (with the specific gaps). Missing info that lives in the repo → the agent explores; intent only a human holds → it asks.
 - **Verify / smoke gate** — no PR without an executed test **and** a real smoke of the changed path (captured), incl. the **shadow-trick** for paid/destructive paths.

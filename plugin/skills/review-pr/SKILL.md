@@ -11,6 +11,8 @@ The protocol for reviewing the **other person's** PR. A PR is an A2A message: th
 
 > **Identity.** `review-pr` posts as **your own** GitHub account (the reviewer) — it does *not* assume the bot and has no `bot-auth` step, because a review is the counterparty's act, not the author's. (The bot's *automated* first-pass — P7 blind-review — does post as the bot; see `a2a-workflow` → `assets/blind-review.md`.)
 
+> **Draft status is expected — not a finding.** The autonomous engine opens every headless PR as a **draft** — you're typically reviewing a draft, not a ready-for-merge PR, and that alone is never a reason to request changes or hold off. The human flips it ready and merges at the Ready-to-merge step, informed by your review, never blocked on it (`plugin/contracts/lifecycle.md`).
+
 ## Detect the repo first (never hardcode)
 
 ```bash
