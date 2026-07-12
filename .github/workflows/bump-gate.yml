@@ -26,3 +26,34 @@ jobs:
             exit 0
           fi
           bash plugin/scripts/bump.sh --check
+
+  plugin-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # need full history to diff against origin/main (mirrors bump-gate)
+      - name: Skip when plugin/ is untouched
+        id: filter
+        run: |
+          git fetch -q origin "main:refs/remotes/origin/main" 2>/dev/null || git fetch -q origin main
+          if git diff --quiet origin/main -- plugin/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No plugin/ change vs main — skipping Claude Code plugin validation."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v6
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          node-version: 'lts/*'
+      - name: Install Claude Code CLI
+        if: steps.filter.outputs.changed == 'true'
+        run: npm install -g @anthropic-ai/claude-code
+      - name: claude plugin validate plugin/
+        if: steps.filter.outputs.changed == 'true'
+        env:
+          CI: "1"   # GitHub Actions already sets CI=true; asserted explicitly so the CLI's
+                    # first-run onboarding wizard (theme picker, API-key prompt) never blocks
+                    # on a prompt in a non-interactive runner.
+        run: claude plugin validate plugin/
