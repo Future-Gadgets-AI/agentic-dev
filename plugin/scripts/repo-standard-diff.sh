@@ -82,7 +82,14 @@ CONTRACT="$PLUGIN_ROOT/contracts/repo-standard.md"
 [ -f "$CONTRACT" ] || { echo "repo-standard-diff: missing contract file: $CONTRACT" >&2; exit 1; }
 
 # --- identity config: parse only what's needed, never source the credentials file ---
-CFG="${AGENTIC_DEV_CONFIG_DIR:-$HOME/.config/agentic-dev}/credentials"
+if [ -n "${AGENTIC_DEV_CONFIG_DIR:-}" ]; then
+  CFG="$AGENTIC_DEV_CONFIG_DIR/credentials"
+elif [ -n "${AGENTIC_DEV_CONFIG:-}" ]; then
+  CFG="$AGENTIC_DEV_CONFIG"
+  echo "repo-standard-diff: AGENTIC_DEV_CONFIG is deprecated, use AGENTIC_DEV_CONFIG_DIR instead." >&2
+else
+  CFG="$HOME/.config/agentic-dev/credentials"
+fi
 _extract() {  # <KEY> — prints the value, or nothing if the file/key is absent
   local key="$1"
   [ -f "$CFG" ] || return 0

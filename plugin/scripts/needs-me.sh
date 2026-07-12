@@ -67,7 +67,14 @@ if [ -z "$OWNER" ]; then
 fi
 
 # --- identity config: parse only the two keys we need, never source the file ---
-CFG="${AGENTIC_DEV_CONFIG_DIR:-$HOME/.config/agentic-dev}/credentials"
+if [ -n "${AGENTIC_DEV_CONFIG_DIR:-}" ]; then
+  CFG="$AGENTIC_DEV_CONFIG_DIR/credentials"
+elif [ -n "${AGENTIC_DEV_CONFIG:-}" ]; then
+  CFG="$AGENTIC_DEV_CONFIG"
+  echo "needs-me: AGENTIC_DEV_CONFIG is deprecated, use AGENTIC_DEV_CONFIG_DIR instead." >&2
+else
+  CFG="$HOME/.config/agentic-dev/credentials"
+fi
 _extract() {  # <KEY> — prints the value, or nothing if the file/key is absent
   local key="$1"
   [ -f "$CFG" ] || return 0

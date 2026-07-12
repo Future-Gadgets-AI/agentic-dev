@@ -41,7 +41,14 @@ If `codeowners.status` is `"blocked_no_reviewers"` (no `--reviewers` and no `AGE
 Otherwise, resolve the reviewer list once — the **same** list Phase A used: the `--reviewers` value if the invocation carried one; else extract `AGENTIC_REVIEWERS` from the bot credentials file without sourcing it (never reconstruct it by parsing `plan.json`'s composed `codeowners.target` rendering):
 
 ```bash
-CFG="${AGENTIC_DEV_CONFIG_DIR:-$HOME/.config/agentic-dev}/credentials"
+if [ -n "${AGENTIC_DEV_CONFIG_DIR:-}" ]; then
+  CFG="$AGENTIC_DEV_CONFIG_DIR/credentials"
+elif [ -n "${AGENTIC_DEV_CONFIG:-}" ]; then
+  CFG="$AGENTIC_DEV_CONFIG"
+  echo "harden-repo: AGENTIC_DEV_CONFIG is deprecated, use AGENTIC_DEV_CONFIG_DIR instead." >&2
+else
+  CFG="$HOME/.config/agentic-dev/credentials"
+fi
 REVIEWERS="$(grep -E '^[[:space:]]*AGENTIC_REVIEWERS[[:space:]]*=' "$CFG" | tail -1 | sed -E 's/^[^=]*=[[:space:]]*//; s/^["'"'"']//; s/["'"'"']$//')"
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-standard-apply-codeowners.sh" "<owner/repo>" --reviewers "$REVIEWERS" --confirmed
 ```
@@ -103,7 +110,14 @@ Fix (if NOT WIRED):
 This is the one part of the run that must **never** act as the bot (Decision D6). Run the pre-flight identity assertion first, exactly as below — do not simplify, shorten, or skip it:
 
 ```bash
-CFG="${AGENTIC_DEV_CONFIG_DIR:-$HOME/.config/agentic-dev}/credentials"
+if [ -n "${AGENTIC_DEV_CONFIG_DIR:-}" ]; then
+  CFG="$AGENTIC_DEV_CONFIG_DIR/credentials"
+elif [ -n "${AGENTIC_DEV_CONFIG:-}" ]; then
+  CFG="$AGENTIC_DEV_CONFIG"
+  echo "harden-repo: AGENTIC_DEV_CONFIG is deprecated, use AGENTIC_DEV_CONFIG_DIR instead." >&2
+else
+  CFG="$HOME/.config/agentic-dev/credentials"
+fi
 BOT_LOGIN="$(grep -E '^[[:space:]]*GITHUB_LOGIN[[:space:]]*=' "$CFG" 2>/dev/null | tail -1 \
   | sed -E 's/^[^=]*=[[:space:]]*//; s/^["'"'"']//; s/["'"'"']$//')"
 CURRENT_LOGIN="$(gh api user --jq .login 2>/dev/null)" \
