@@ -122,6 +122,10 @@ Re-probe that `main` exists before rendering the confirmation (Decision D7 — P
 - `main` missing and A2 didn't just create it (declined, blocked, or a non-empty repo with no `main`) → skip the **protection** half only, report `BLOCKED (main branch does not exist)`. The **ruleset** half has no such dependency (its `ref_name` conditions are pattern-based, not tied to an existing branch) — proceed with it independently.
 - `main` exists → continue below.
 
+Before the combined match check below, handle `na_plan_limitation` the same way the check above handles a missing `main`: read protection status and ruleset status independently — one half's status never implies the other's. Whichever half's status is `"na_plan_limitation"` (the **protection** half, the **ruleset** half, or both) is fully resolved right here, for the rest of this sub-step: its put/post body is never read or shown, its write is never attempted, and it is reported as `N/A (plan limitation)` — never `NO-OP (already matches)`, which stays reserved for a genuine `"match"` — together with the Free-plan carve-out's mandated fallback (`plugin/contracts/repo-standard.md`, "Free-plan carve-out"): process enforcement (bot-authored PRs plus human merges) stands in for the missing technical guardrail, plus a note on the *target* repo's own README documenting the residual risk (no branch protection/ruleset on this repo; merges are enforced by process, not by GitHub).
+
+A half resolved this way counts, everywhere below in this sub-step, exactly like a half already at `"match"`, even though the wording ahead never names this exception inline: the confirmation prompt's per-half blocks below omit it on the same terms as an already-`"match"` half, and it never runs its write line on **Yes** below either. If resolving `na_plan_limitation` this way leaves no half whose status still needs a write — both halves accounted for, or the one half left over is genuinely `"match"` — there is nothing to confirm at all: skip the confirmation prompt entirely and go straight to the Final report, exactly as the already-both-`"match"` case immediately below does.
+
 If protection status is already `"match"` **and** ruleset status is already `"match"` — nothing to confirm; report `NO-OP (already matches)` for both and skip straight to the Final report without asking.
 
 Otherwise, read `$PLAN_DIR/protection-put-body.json` and (if present) `$PLAN_DIR/ruleset-post-body.json`, pretty-print them, and **end your turn and wait for the human's next message**:
@@ -161,12 +165,14 @@ On **No** → report `DECLINED`, note "re-run `/harden-repo <repo> --apply` to r
 ```
 ### Branch protection + ruleset
 Identity:  ambient human (<CURRENT_LOGIN>) — asserted != configured bot (asserted <timestamp>)
-Status:    APPLIED (confirmed) | NO-OP (already matches) | AWAITING CONFIRMATION | DECLINED | BLOCKED (main branch does not exist) | BLOCKED (ambient identity check failed)
+Status:    APPLIED (confirmed) | NO-OP (already matches) | AWAITING CONFIRMATION | DECLINED | BLOCKED (main branch does not exist) | BLOCKED (ambient identity check failed) | N/A (plan limitation)
 Changed:
   protection.required_status_checks.contexts: <before> -> <after>
   (all other observed protection fields — restrictions, required_conversation_resolution,
    required_linear_history, block_creations, lock_branch, allow_fork_syncing — preserved verbatim)
   ruleset: created "branch-naming-convention" (new id <n>) | already present, no-op | DRIFT (not modified — see plan.json ruleset.diff_fields)
+  protection: N/A (plan limitation) — not written; see plan.json protection.reason for the 403 body; fallback: process enforcement (bot-authored PRs + human merges) plus a README note on <owner/repo> documenting the residual risk (no branch protection — merges enforced by process, not by GitHub)   (only if protection status is "na_plan_limitation")
+  ruleset: N/A (plan limitation) — not written; see plan.json ruleset.reason for the 403 body; fallback: process enforcement (bot-authored PRs + human merges) plus a README note on <owner/repo> documenting the residual risk (no branch-naming ruleset — merges enforced by process, not by GitHub)   (only if ruleset status is "na_plan_limitation")
 ```
 
 ## Final report (always rendered, both modes)
