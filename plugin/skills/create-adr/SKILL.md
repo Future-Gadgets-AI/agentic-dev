@@ -17,7 +17,7 @@ An ADR is for a decision that is **architecturally significant and expensive to 
 
 ### 1. Gather the essentials (ask the user for whatever's missing)
 - **Decision** — what it is, in one sentence, in **active, present voice** ("The system adopts…", "We will…") — it reads as a commitment, not an open debate.
-- **Number** — **not authoritative locally.** Canonical numbering lives in the `type:adr` issues on GitHub; local file numbers collide. In the draft, name by slug and leave the number as `ADR-XXX` / to be confirmed — the real number is assigned when published as an issue. Never treat a local file number as truth.
+- **Number** — **not authoritative locally.** Canonical numbering lives in the `type:adr` issues on GitHub — allocated **sequentially at publish time** from the live board's existing ADRs, never from the number GitHub happens to assign the newly created issue itself (those are two independent counters); local file numbers collide. In the draft, name by slug and leave the number as `ADR-XXX` / to be confirmed — `publish-issue` computes the real number (highest existing ADR + 1) when it publishes the draft as an issue. Never treat a local file number as truth.
 - **Context / Problem** — the current state and what exactly needs to be decided (the pain).
 - **Alternatives** considered + **why each one was passed over** (the "why not", not just the "why yes") — that's what proves the decision was weighed.
 - **Consequences** — trade-offs on **both sides**: what gets easier (positive) **and** what gets harder / riskier (negative). A consequence with only upside is a sales pitch, not a decision record.
