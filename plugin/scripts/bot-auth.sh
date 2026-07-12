@@ -15,7 +15,15 @@
 # author env in *this* shell so the git/gh commands that follow inherit them.
 
 __bot_auth() {
-  local cfg="${AGENTIC_DEV_CONFIG:-$HOME/.config/agentic-dev/credentials}"
+  local cfg
+  if [ -n "${AGENTIC_DEV_CONFIG_DIR:-}" ]; then
+    cfg="$AGENTIC_DEV_CONFIG_DIR/credentials"
+  elif [ -n "${AGENTIC_DEV_CONFIG:-}" ]; then
+    cfg="$AGENTIC_DEV_CONFIG"
+    echo "bot-auth: AGENTIC_DEV_CONFIG is deprecated, use AGENTIC_DEV_CONFIG_DIR instead." >&2
+  else
+    cfg="$HOME/.config/agentic-dev/credentials"
+  fi
 
   # Resolve the token. Precedence: an already-exported GITHUB_PAT, else the
   # gitignored credentials file written by setup-bot.sh. No token => fail fast.

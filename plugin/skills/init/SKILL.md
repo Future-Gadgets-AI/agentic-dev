@@ -24,6 +24,7 @@ If `gh` is missing, stop and point them to https://cli.github.com — nothing el
 ls -l "${AGENTIC_DEV_CONFIG_DIR:-$HOME/.config/agentic-dev}/credentials" 2>/dev/null \
   && echo "already configured — re-running setup overwrites it"
 ```
+> Read paths also accept the deprecated `AGENTIC_DEV_CONFIG` (a full file path) as a fallback — see `bot-auth.sh`, `needs-me.sh`, `repo-standard-diff.sh`, and `harden-repo.md`'s CFG snippets. This probe and `setup-bot.sh`'s write path stay canonical-only (`AGENTIC_DEV_CONFIG_DIR`).
 
 ## Step 1 — Gather the details (ask first)
 
