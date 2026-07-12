@@ -23,5 +23,8 @@ An issue's life is a state machine. Each **column** has one **owner** (human or 
 ## Ownership boundary — where humans stay
 Humans own exactly three points — **Refinement**, **Escalated**, and **Ready-to-merge** — not Review (`CONSTITUTION.md` Principle IV). Everything between Ready and Ready-to-merge, Review included, is autonomous by default: the blind review is Review's only mandated procedure, and a human may optionally run `/review-pr` for a second pass, but it is never required. **The merge is always human.** The blind review that precedes it only informs that decision — it never substitutes for it (`CONSTITUTION.md` Principle V). Escalation is **async**: the card waits in a column behind a label; the human reviews a "brownfield" card when they get to it, then fire-and-forgets again.
 
+## The draft-PR + ready-flip convention
+The autonomous engine opens every PR as a **draft** — the headless default (`/pickup`, `a2a-workflow`). The blind review in the **Review** row above runs against that draft, not a ready-for-merge PR: draft status there is expected, never itself a review finding. The human flips the PR ready and merges it — the same action, not two separate steps — at **Ready-to-merge**.
+
 ## Minimalism
 Every column must earn its place with a *distinct* owner + procedure. Resist speculative columns — a ready-gate that grows into a bureaucratic stage-gate kills flow (the Definition-of-Ready anti-pattern).
