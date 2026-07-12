@@ -40,7 +40,17 @@ source "${CLAUDE_PLUGIN_ROOT}/scripts/bot-auth.sh" || exit 1
 5. **Parent / sub-issue = GitHub native relationship**, never `Parent: #21` in the body. Use GitHub's sub-issue feature (in the UI, or `gh` sub-issue commands / the API where available) to attach a task/bug/spike under its parent feature or epic, or an ADR-implementing task under its ADR.
 
 ### ADRs specifically
-An ADR publishes exactly like an issue, with `--label type:adr`. The canonical ADR number is the **issue number** assigned here — update the draft's `ADR-XXX` to match once known.
+An ADR publishes exactly like an issue, with `--label type:adr` in step 3 — except its number. The canonical ADR number is **not** the number GitHub assigns when the issue is created in step 2; the board numbers ADRs **sequentially** instead. Allocate it right after creation, before continuing to steps 3–5 (labels / assignee / parent), then write it back onto the issue via retitle:
+
+1. **Allocate — max + 1.** Find the highest existing `ADR-NNNN` across **all** issue states — a `Rejected` or `Superseded` ADR keeps its number forever, so closed issues must count too:
+   ```bash
+   gh issue list --repo "$REPO" --search "[ADR-" --state all --limit 200 --json title \
+     -q '.[].title' | grep -oE 'ADR-[0-9]+' | grep -oE '[0-9]+' | sort -n | tail -1
+   ```
+   Next number = max + 1, padded to the board's existing width (currently 4 digits — today's max is `9`, so the next ADR is `ADR-0010`). The extracted max keeps its leading zeros (e.g. `0009`) — strip them or force base-10 (`10#$max`) before the arithmetic, since bash reads a leading-zero literal as octal and `0009` isn't valid octal.
+2. **Re-check immediately before retitling.** Immediately before running the retitle in step 3 below, re-run the same search. If another publish raced this one and claimed that number in the meantime, take the new max + 1 instead — this is what keeps allocate-at-publish-time race-safe when two drafts publish in parallel.
+3. **Retitle + substitute.** `gh issue edit <n> --repo REPO --title "ADR-<next>: <title>"`, and replace the `ADR-XXX` placeholder in the body with the confirmed number.
+4. **Never reuse a number.** A number is retired the moment it's allocated, even if that ADR is later `Rejected` or `Superseded` — the next allocation always comes from step 1's live max, never from a gap left by a closed ADR.
 
 ## Curate — close, NEVER delete
 
