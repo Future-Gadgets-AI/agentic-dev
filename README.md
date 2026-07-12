@@ -22,6 +22,15 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 | `/agentic-dev:a2a-workflow` | End-to-end issue → PR engine: understand → clarify → issue → branch → implement → verify → PR → blind-review, with four quality gates |
 | `/agentic-dev:fix-bug` | Thin wrapper that drives a bug through `a2a-workflow` |
 | `/agentic-dev:implement` | Atomic design+build for one ready issue (ADR-0009's composable middle — no branching, no PR of its own) |
+| `/agentic-dev:refine-issue` | Ground a `readiness:draft` issue, grade it against the DoR rubric, and flip it to `readiness:ready` — the human-side mirror of `/pickup`'s autonomy gate |
+
+**Session modes & authoring** (capabilities for the human–agent boundary):
+
+| Skill | Purpose |
+|---|---|
+| `/agentic-dev:night-shift` | Delegated-human mode — the sanctioned, explicit-grant-only delegation of the merge gate: the agent assumes the human role (approve/merge/direct) for an unattended run, inside a charter with hard residual boundaries |
+| `/agentic-dev:research-partner` | Adversarial collaboration mode — anti-sycophancy guards for design and refinement conversations at the human boundary |
+| `/agentic-dev:fable5-prompting` | Authoring rules for Claude Fable 5 prompt artifacts — skills, agents, CLAUDE.md, and pipeline system prompts (this plugin's own components are prompt artifacts) |
 
 **Commands** (entrypoints — orchestration only, per the component taxonomy):
 
