@@ -1,6 +1,13 @@
 ---
 name: refine-issue
-description: Refines a `readiness:draft` or bounced `readiness:needs-refinement` GitHub issue up to `readiness:ready`: grounds it against the repo, applies the Definition-of-Ready rubric, resolves the gaps the codebase can answer itself, asks the human only for genuine intent gaps, rewrites it self-contained, and flips the label — auto, within blast-radius bounds. The human-side mirror of `/pickup`'s autonomy gate. Use when the user wants to refine, ready, grade, or flesh out a draft issue, DoR-check it, or prepare the board's drafts for autonomous pickup. Authoring a brand-new issue is create-issue; executing a ready one is /pickup.
+description: >-
+  Refines a `readiness:draft` or bounced `readiness:needs-refinement` GitHub issue up to
+  `readiness:ready`: grounds it against the repo, applies the Definition-of-Ready rubric,
+  resolves the gaps the codebase can answer itself, asks the human only for genuine intent gaps,
+  rewrites it self-contained, and flips the label — auto, within blast-radius bounds. The
+  human-side mirror of `/pickup`'s autonomy gate. Use when the user wants to refine, ready,
+  grade, or flesh out a draft issue, DoR-check it, or prepare the board's drafts for autonomous
+  pickup. Authoring a brand-new issue is create-issue; executing a ready one is /pickup.
 ---
 
 # Refine Issue
