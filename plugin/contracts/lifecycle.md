@@ -12,7 +12,7 @@ An issue's life is a state machine. Each **column** has one **owner** (human or 
 | **Ready** (To-Do) | 🤖 autonomous | `/pickup #N` runs the DoR gate, then begins | In Progress · or → Refinement (gate NOT-READY → `needs-refinement`) |
 | **In Progress** | 🤖 autonomous | the `/pickup` engine: branch → SDD (implement) → smoke gate | Review · or Escalated (mid-flight block) |
 | **Escalated** | 🧑 human | answer the structured question in a comment; remove `status:needs-decision` | In Progress (a session resumes) |
-| **Review** | 🤖 blind-review, then 🧑 `/review-pr` | the blind reviewer runs the test plan + comments; the other human reviews the PR | Ready-to-merge · or → In Progress (changes requested) |
+| **Review** | 🤖 blind-review | the blind reviewer runs the test plan + comments — the only mandated Review procedure; a human may optionally run `/review-pr` for a second pass before the merge decision, but it is never required (`CONSTITUTION.md` Principles IV–V) | Ready-to-merge · or → In Progress (changes requested) |
 | **Ready to merge** | 🧑 human | merge the PR | Done |
 | **Done** | — | terminal (issue closed) | — |
 
@@ -21,7 +21,7 @@ An issue's life is a state machine. Each **column** has one **owner** (human or 
 - **Smoke gate** (In Progress → Review): no PR without an executed test **and** a real smoke of the changed path (captured transcript), incl. the shadow-trick for paid/destructive paths.
 
 ## Ownership boundary — where humans stay
-Humans own **Refinement**, **Escalated**, and **Ready-to-merge** (and may own Review). Everything between Ready and the PR is autonomous. **The merge is always human.** Escalation is **async**: the card waits in a column behind a label; the human reviews a "brownfield" card when they get to it, then fire-and-forgets again.
+Humans own exactly three points — **Refinement**, **Escalated**, and **Ready-to-merge** — not Review (`CONSTITUTION.md` Principle IV). Everything between Ready and Ready-to-merge, Review included, is autonomous by default: the blind review is Review's only mandated procedure, and a human may optionally run `/review-pr` for a second pass, but it is never required. **The merge is always human.** The blind review that precedes it only informs that decision — it never substitutes for it (`CONSTITUTION.md` Principle V). Escalation is **async**: the card waits in a column behind a label; the human reviews a "brownfield" card when they get to it, then fire-and-forgets again.
 
 ## Minimalism
 Every column must earn its place with a *distinct* owner + procedure. Resist speculative columns — a ready-gate that grows into a bureaucratic stage-gate kills flow (the Definition-of-Ready anti-pattern).
