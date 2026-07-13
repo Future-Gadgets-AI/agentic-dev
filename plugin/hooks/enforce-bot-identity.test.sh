@@ -107,12 +107,29 @@ check 0 'AC4 graphql mutation + marker' \
   "$ORG_CWD"
 
 echo "=== AC5 — URL-form org resolution, before the cwd fallback, for a non-merge/repo-delete verb ==="
-check 2 'AC5 https URL resolves org despite non-org cwd (gh issue comment)' \
-  'gh issue comment 5 --body "see https://github.com/Future-Gadgets-AI/agentic-dev/issues/1"' \
+check 2 'AC5 https URL target resolves org despite non-org cwd (gh issue comment by URL)' \
+  'gh issue comment https://github.com/Future-Gadgets-AI/agentic-dev/issues/1 --body "thanks"' \
   "$NOGIT_CWD"
 check 2 'AC5 ssh URL resolves org despite non-org cwd (git push by URL)' \
   'git push git@github.com:Future-Gadgets-AI/agentic-dev.git HEAD:main' \
   "$NOGIT_CWD"
+
+echo "=== AC5b — quoted prose URLs are NOT targets (PR #88 blind-review finding 1) ==="
+check 2 'AC5b quoted other-org URL in --body cannot spoof merge target (org cwd)' \
+  'gh pr merge 5 --body "closes https://github.com/some-other-org/other-repo/pull/1"' \
+  "$ORG_CWD"
+check 2 'AC5b quoted other-org URL in --body cannot spoof comment target (org cwd)' \
+  'gh issue comment 5 --body "see https://github.com/some-other-org/other-repo/issues/2"' \
+  "$ORG_CWD"
+check 0 'AC5b quoted org URL in prose alone does not deny (target unresolvable, low-consequence verb)' \
+  'gh issue comment 5 --body "see https://github.com/Future-Gadgets-AI/agentic-dev/issues/1"' \
+  "$NOGIT_CWD"
+check 2 'AC5b unquoted URL target still beats a confirmed-other-org cwd (merge)' \
+  'gh pr merge https://github.com/Future-Gadgets-AI/agentic-dev/pull/5' \
+  "$OTHERORG_CWD"
+check 0 'AC5b quoted org URL in prose does not block a personal-repo merge (other-org cwd)' \
+  'gh pr merge 5 --body "backports https://github.com/Future-Gadgets-AI/agentic-dev/pull/3"' \
+  "$OTHERORG_CWD"
 
 echo "=== AC6 — gh pr merge: unmarked block regardless of identity or how the target resolves ==="
 check 2 'AC6 URL merge, ambient, unresolved cwd' \

@@ -868,3 +868,33 @@ Per the DEFINE's own "Out of scope" section, re-confirmed against the live tree 
 **Status: ready for Build.** 2 files (1 edit, 1 create), 0 structural plugin changes, 0 git/gh
 operations performed by this design phase. Both files' exact content was verified by real
 execution before being written into this document (section 2.3).
+
+---
+
+## Amendment 1 — post-blind-review (PR #88, finding 1)
+
+The blind review of PR #88 found a live regression in §1.3's URL-form scan as designed: it read
+the **entire** command string, so a *quoted prose* URL (e.g. a `--body` citing another org's PR)
+could spoof the target resolution — reproduced as `gh pr merge 5 --body "…https://github.com/some-other-org/…"`
+in an org cwd resolving `False` (confirmed-other-org) and slipping an unmarked org merge through
+the merge gate. The mirror over-block existed too (an org URL in prose blocking a personal-repo
+write).
+
+**Amended rule:** the URL-form scan runs against only the **unquoted** part of the command
+(`_strip_quoted()` removes single-/double-quoted segments first) — free text travels in quotes; a
+URL in target position does not. The scan keeps its position **before** the cwd-remote fallback
+(the issue's recorded ordering): moving cwd resolution first instead — the review's suggested
+minimal fix — would have reopened the issue's own repro #3 for any out-of-tree cwd that is itself
+a resolvable personal repo (`gh pr merge <org-URL>` from `~/personal-project` → cwd `False` →
+allow). The `--repo`/`-R` and `repos/|orgs/` scans still read the raw string (their tokens
+legitimately appear inside quotes, e.g. `gh api "repos/ORG/…"`).
+
+**Test impact:** old AC5 case 1 (a quoted `--body` org URL as the org signal) encoded exactly the
+misreading this amendment fixes; it is replaced by a target-position URL fixture
+(`gh issue comment <org issue URL> --body "thanks"`), and a new **AC5b** group (5 cases) pins the
+behavior in both directions: quoted other-org URLs can't spoof a merge/comment target out of the
+org (deny), quoted org URLs in prose alone neither deny a low-consequence unresolvable write
+(fail-open) nor block a personal-repo merge, and an *unquoted* URL target still beats a
+confirmed-other-org cwd (deny). Suite: 54 → 59 cases. Known residual (documented, accepted):
+free text arriving via an unquoted heredoc body is not stripped — a far narrower form than the
+reviewed `--body` repro, and deny-direction mistakes stay one-marker-re-run cheap.

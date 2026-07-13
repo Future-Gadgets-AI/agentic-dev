@@ -84,6 +84,16 @@ def deny(reason):
     sys.exit(2)
 
 
+def _strip_quoted(cmd):
+    """Drop single-/double-quoted segments — free text (--body/--title values)
+    travels in quotes, while a URL used as an actual command TARGET does not.
+    Scanning only the unquoted remainder keeps prose URLs (e.g. a --body citing
+    another org's PR) from spoofing — or masking — the target-org resolution
+    (PR #88 blind-review finding 1). Naive about escaped quotes, like every
+    other heuristic here."""
+    return re.sub(r'"[^"]*"|\'[^\']*\'', ' ', cmd)
+
+
 def targets_expected_org(cmd, cwd):
     """True/False if we can determine the target org, else None (unknown)."""
     # gh --repo OWNER/REPO  or  -R OWNER/REPO
@@ -92,10 +102,12 @@ def targets_expected_org(cmd, cwd):
         return m.group(1).lower() == EXPECTED_ORG
     # URL-form: https://github.com/OWNER/... or git@github.com:OWNER/... (issue #57,
     # binding policy decision 3). Checked before the cwd-remote fallback so a
-    # `gh pr merge <url>` (or any command carrying a github.com URL) resolves
-    # without the fallback ever running — for every verb class, not just
-    # merge/repo-delete.
-    m = re.search(r'\bgithub\.com[:/]([^/\s]+)/', cmd)
+    # `gh pr merge <url>` (or any command carrying a github.com URL as its target)
+    # resolves without the fallback ever running — for every verb class, not just
+    # merge/repo-delete. Scans only the UNQUOTED part of the command: a quoted URL
+    # is prose (--body/--title text), not a target, and must not override the real
+    # target's resolution below (PR #88 blind-review finding 1).
+    m = re.search(r'\bgithub\.com[:/]([^/\s]+)/', _strip_quoted(cmd))
     if m:
         return m.group(1).lower() == EXPECTED_ORG
     # gh api repos/OWNER/...  or  orgs/OWNER
