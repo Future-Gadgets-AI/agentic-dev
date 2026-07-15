@@ -18,8 +18,9 @@ argument-hint: "[what you want done]"
 # Create goal
 
 **Source of truth:** <https://code.claude.com/docs/en/goal> — snapshot 2026-07-14, needs Claude
-Code ≥ 2.1.139. The multi-line condition and the Haiku evaluator below are *observed* behavior
-(probed on 2.1.210), not inference. Re-fetch the doc if anything here contradicts what you see.
+Code ≥ 2.1.139. Everything below is from the doc except one probed fact (multi-line conditions
+parse intact — observed on 2.1.210) and one inference, flagged where it appears. Re-fetch the doc
+if anything here contradicts what you see.
 
 **One responsibility: author the condition, and prove it starts false.** You never arm the goal —
 you hand over a string to paste, because a loop that spends money unattended is the human's to
@@ -31,15 +32,19 @@ start (ADR-0002: humans author and approve).
   It is the opening prompt *and* the stop test at once. Serving both is the craft: a pure test
   ("all tests pass") is a limp directive, and a pure directive ("migrate the auth module") is
   unjudgeable.
-- **After each turn, a small fast model (Haiku) reads the condition and the conversation and
-  returns yes/no with a reason.** A "no" hands that reason back as the next turn's guidance.
+- **After each turn, your configured small fast model — Haiku by default — reads the condition and
+  the conversation and returns yes/no with a reason.** A "no" hands that reason back as the next
+  turn's guidance.
 - **The evaluator has no tools.** It cannot run your tests or open your files. It judges text
-  already sitting in the transcript — fast, cheap (~5% of turn spend), and a prompt-honored judge
-  rather than a gate.
+  already sitting in the transcript — a prompt-honored judge rather than a gate, and cheap enough
+  that its spend is not a reason to avoid a goal.
 - **A goal grants no permissions.** Unattended turns need auto mode, or turn 1 stalls at the first
   approval prompt and the loop quietly does nothing.
-- **A bound is not durable.** On `--resume` the condition carries over, but the turn count, timer,
-  and spend baseline all reset — so "stop after 20 turns" silently becomes *20 more*, every resume.
+- **A bound may not survive `--resume`.** The doc is explicit that the turn count, timer, and spend
+  baseline all reset while the condition carries over. Whether "stop after 20 turns" then means
+  *20 more* is an **inference** — the doc says the evaluator judges that clause from the
+  conversation, which resume restores — but plan for the unsafe reading: an unattended resume is
+  the last place you want to discover you were wrong.
 
 `/goal` alone shows status; `/goal clear` stops it. Conditions can run to 4,000 characters, and
 multi-line parses fine.
@@ -100,7 +105,11 @@ who is already walking out the door.
    label.
 2. **Find the real check and run it.** Discover the command from the repo — `package.json`,
    `Makefile`, `pyproject.toml`, CI config — never assume `npm test`. Execute it and keep the
-   output.
+   output. **Every other term in the condition is a fact about the repo too** — a label name, a
+   status, a path, a workflow — so read each one from the file that owns it rather than from
+   memory. A condition full of remembered names looks rigorous and is exactly the kind of thing a
+   credulous judge waves through; you'd be relying on the evaluator being generous, which is the
+   one thing this skill says never to do.
 3. **It should FAIL.** A check that already passes means the goal clears on turn 1 having done
    nothing: either the work is done (say so) or the condition tests the wrong thing. If the check
    needs credentials, network, or minutes you don't have, don't fake it — draft and flag it
@@ -170,9 +179,9 @@ Give escalation a winning branch, and price it:
 ```
 /goal Execute the /pickup workflow (plugin/commands/pickup.md) for issue #N.
 
-Done when EITHER a PR for #N is open with the blind review posted, OR #N carries the `blocked`
-label and a bot-attributed comment naming the specific blocker and what was attempted. Both are
-success — do not guess past a blocker to satisfy this goal.
+Done when EITHER a PR for #N is open with the blind review posted, OR #N is escalated exactly the
+way plugin/commands/pickup.md prescribes — paste the URL of the bot comment naming the specific
+blocker and what was attempted. Both are success — do not guess past a blocker to satisfy this goal.
 
 Constraints: never merge; never flip readiness yourself.
 
