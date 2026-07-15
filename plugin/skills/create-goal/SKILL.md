@@ -1,17 +1,7 @@
 ---
 name: create-goal
 description: >-
-  Authors a paste-ready `/goal <condition>` — Claude Code's loop primitive, which re-prompts the
-  session after every turn until a small fast model judges the condition met. Grounds the
-  condition in the repo and runs the check for real first, so the loop can neither self-clear on
-  turn 1 nor hunt for a proof that never arrives. Use whenever the user wants to create, write,
-  set, draft, or repair a goal; hand a session off to grind unattended; says "keep working until
-  X", "don't stop until", "run it till it's green"; mentions loop engineering or completion
-  conditions; or asks why a /goal looped forever, cleared early, or stalled on a permission
-  prompt. NOT for this repo's root `GOAL.md` standing-intent anchor — that's a document about why
-  the repo exists, changed by an ordinary doc PR, and shares nothing with this command but the
-  word. Also not for time-triggered re-runs (`/loop`), evaluation in every session forever (a Stop
-  hook in settings), or delegating merge authority for an unattended run (night-shift).
+  Authors a paste-ready `/goal <condition>` — Claude Code's loop primitive, which re-prompts the session after every turn until a small fast model judges the condition met. Grounds the condition in the repo and runs the check for real first, so the loop can neither self-clear on turn 1 nor hunt for a proof that never arrives. Use whenever the user wants to create, write, set, draft, or repair a goal; hand a session off to grind unattended; says "keep working until X", "don't stop until", "run it till it's green"; mentions loop engineering or completion conditions; or asks why a /goal looped forever, cleared early, or stalled on a permission prompt. NOT for this repo's root `GOAL.md` standing-intent anchor — that's a document about why the repo exists, changed by an ordinary doc PR, and shares nothing with this command but the word. Also not for time-triggered re-runs (`/loop`), evaluation in every session forever (a Stop hook in settings), or delegating merge authority for an unattended run (night-shift).
 argument-hint: "[what you want done]"
 ---
 
