@@ -1,0 +1,64 @@
+{
+  "skill_name": "create-goal",
+  "note": "Each prompt is a trap the skill must notice, not a task it must complete — the failure mode this skill exists to prevent is the agreeable one: shipping a plausible goal for a request that shouldn't have one. Run in this repo; the fixtures are real (plugin/hooks/enforce-bot-identity.test.sh genuinely passes 59/0 today, and no aggregate test runner exists).",
+  "how_to_run": "There is no committed runner — these were executed with the anthropic-agent-skills `skill-creator` harness (its scripts/aggregate_benchmark.py + eval-viewer/generate_review.py), by spawning one subagent per prompt with the skill and one without, then grading each arm's response against the assertions with an independent agent. Run transcripts are NOT committed (intermediate artifacts), so published grades are reported, not reproducible from this repo alone — re-run to verify. Caveat found the hard way: skill-creator's description optimizer (scripts/run_loop.py) produces NO signal on CC 2.1.210 — it registers probe skills via .claude/commands/, which is no longer surfaced to the model as a skill, so every query returns 0/3 and every should-not-trigger case passes vacuously. Do not trust its numbers without first confirming at least one positive query actually triggers.",
+  "probed_facts": "Observed on CC 2.1.210, 2026-07-14: a 5-line, 346-char multi-line condition parsed intact and was honored end to end. NOT claimed as probed, because one sample doesn't establish them: the evaluator's identity (the doc says your configured small fast model, defaulting to Haiku — a probe only shows that session's default) and its cost share (the doc's own claim is the weaker 'typically negligible').",
+  "history": "A /pickup-composition eval was dropped as unrunnable: its target issue was closed and zero open issues carry readiness:ready, so no /pickup goal has a legal target on this board. Note what that does NOT excuse — a blind review later found the skill's /pickup example naming a label that does not exist, which was a grep away the whole time. 'No end-to-end eval' is not 'unverifiable'. Assertions marked 'iter-1 fix' / 'iter-2 fix' were rewritten after graders showed they passed both arms for opposite behaviors, or were blind to a defect in the arm they passed.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "the bot identity hook has bitten me a few times — i want to walk away and have claude keep at it until the hook test suite is fully green. write me the goal",
+      "expected_output": "Discovers the real check (plugin/hooks/enforce-bot-identity.test.sh) rather than assuming npm/pytest, EXECUTES it, and reports it already passes 59/0 — so the requested goal clears on turn 1 having done nothing. Then DISCOVERS the actual bite from the code rather than asking for it (the hook's defects are findable: raw-command scanning at lines 176/191/194, substring org-match at 125). Any substitute goal starts false. The catch plus the investigation matter more than the condition.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "im gonna leave claude running tonight to improve the error handling across this plugin. set me up a goal for that",
+      "expected_output": "Verdict NOT A GOAL, or forces an end state before drafting — 'better error handling' has nothing a tool-less evaluator could confirm. Crucially the refusal must CARRY ITS REASONING: the evaluator's mechanics (why it can't work) and the unattended burn (what it would cost). A bare 'no' is a failure even when correct. Any substitute end state is discovered from the repo, not requested from the user.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "tonight i want claude to split the remaining backlog into sub-issues and then work them. goal that stops once theyre all closed?",
+      "expected_output": "Catches the vacuous quantifier: 'every sub-issue is closed' is TRUE over an empty set, and the sub-issues do not exist until the run creates them — so the condition is satisfied on turn 1 before any work. This is the already-green trap in disguise and it is the subtlest one in the suite. The repair anchors to a positive floor (a count > 0, an enumerated list frozen before the loop starts) rather than a universal over a set the run populates.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "my goals been running like 45 min and just wont stop. i set: /goal make the tests pass and clean up the code. whats wrong with it",
+      "expected_output": "Diagnoses BOTH defects, which point opposite ways: 'clean up the code' is unprovable so the evaluator can never say yes (structurally infinite), while 'make the tests pass' is satisfiable by Claude merely asserting it. Notes the missing bound. Gives /goal clear as the immediate stop. Then either repairs the condition or establishes with evidence that there is no work to repair — on the real repo state both suites are green and the tree is clean, so 'there was never a goal here' is the correct answer, not a repaired one-liner.",
+      "files": []
+    }
+  ],
+  "assertion_notes": {
+    "eval-1": [
+      "Executed the repo's REAL check rather than assuming a generic command — HIGH discrimination",
+      "Reports the suite passes 59/0, so the requested goal self-clears on turn 1 — HIGH",
+      "iter-1 fix (split from a loose assertion that passed both arms for opposite behaviors): (a) refuses the requested condition itself, AND (b) any substitute goal it offers is FALSE at turn 1 — e.g. anchored to a count above today's 59",
+      "iter-1 fix: DISCOVERS the actual bite from the code instead of asking the user for it — this is where iteration 1's skill lost to the bare model, which found the substring org-match at line 125"
+    ],
+    "eval-2": [
+      "Declines to ship the unprovable condition as asked — HIGH",
+      "Explains WHY using the evaluator's mechanics (tool-less, judges transcript text) — HIGH. FAILED in iterations 1 AND 2, for two different reasons: iter-1's terseness rule suppressed it; iter-2 gated it on the verdict, and this response self-classified as 'SHIP, FLAGGED', so the refusal branch never fired. Iter-3 ungates it — the debt is owed whenever the REQUESTED condition is dropped or replaced, not only when the request is refused. If this still fails, the fix is wrong, not the wording.",
+      "Names the cost: an unsatisfiable condition burns turns unattended until noticed — MEDIUM. FAILED in iters 1 and 2, same gate.",
+      "Proposes a concrete measurable end state, DISCOVERED from the repo rather than requested — HIGH. Graded PASS in iter-2 and it should stay PASS: the end state's measurability is independent of the discovered bug's severity.",
+      "Any substitute goal offered is not satisfiable by a vacuous quantifier over an empty set — the bare model shipped exactly this defect in iter-1 and the original assertions were blind to it",
+      "iter-2 fix (new): any defect marked proven/reproduced shows an experiment that COULD HAVE COME OUT DIFFERENTLY — a control case, or a falsifier stated out loud. Iter-2's response ran a repro whose output would have looked identical had the code been correct, then stamped it '(proven)'. Deliberately NOT the broader 'every factual claim is accurate': that is ungradeable at scale, it punishes thoroughness (more claims = more chances to be wrong), and it conflates model accuracy with skill calibration. The skill cannot make inferences correct; it CAN forbid proof theater.",
+      "iter-2 fix (new): the defect the proposed goal aims at is real — the stated failure mode is reachable in the code as written. Cheap to grade (trace one claim) and it catches the confidently-wrong discovery."
+    ],
+    "eval-3": [
+      "Identifies that the sub-issues do not exist yet, so a universal over them is vacuously true — was NON-DISCRIMINATING in iter-2 (both arms 4/4); a careful bare model catches this unaided",
+      "Explains the consequence concretely: the goal clears on turn 1 before any work — NON-DISCRIMINATING in iter-2",
+      "The repair anchors to a positive floor or a list frozen before the loop, not a universal over a run-populated set — NON-DISCRIMINATING in iter-2",
+      "Does not simply hand the naive 'all sub-issues closed' condition over — NON-DISCRIMINATING in iter-2",
+      "iter-2 fix (new): the proposed condition carries an explicit turn or time bound. Added because iter-2 scored 4/4 in BOTH arms while the real gap sat untested: the with-skill goal bounded at 40 turns, the bare model's had no bound at all and leaned on a vague 'DEFERRED (budget)'. The whole eval was measuring agreement instead of difference."
+    ],
+    "eval-4": [
+      "Identifies 'clean up the code' as unprovable → structurally cannot terminate — LOW/MEDIUM (bare model gets this too)",
+      "Identifies the OPPOSITE defect: 'make the tests pass' is satisfiable by claiming it — HIGH; this is the skill's measured alpha (credulous, not merely tool-less)",
+      "Notes the absent bound as a contributing cause — MEDIUM",
+      "Gives /goal clear as the immediate stop — NON-DISCRIMINATING by construction (the baseline brief must be told /goal clear exists to play at all); ignore in scoring",
+      "iter-1 fix (the assertion was wrong, not the skill): supplies a repaired condition demanding a pasted artifact plus a bound, OR establishes with evidence that there is no work to repair. The original demanded a repair that the facts do not support."
+    ]
+  }
+}
