@@ -31,6 +31,7 @@ Agentic development workflows with GitHub integration. A suite of Claude Code sk
 | `/agentic-dev:night-shift` | Delegated-human mode — the sanctioned, explicit-grant-only delegation of the merge gate: the agent assumes the human role (approve/merge/direct) for an unattended run, inside a charter with hard residual boundaries |
 | `/agentic-dev:research-partner` | Adversarial collaboration mode — anti-sycophancy guards for design and refinement conversations at the human boundary |
 | `/agentic-dev:fable5-prompting` | Authoring rules for Claude Fable 5 prompt artifacts — skills, agents, CLAUDE.md, and pipeline system prompts (this plugin's own components are prompt artifacts) |
+| `/agentic-dev:create-goal` | Author a paste-ready `/goal <condition>` — Claude Code's session loop primitive, which re-prompts a session each turn until a tool-less judge rules the condition met. Grounds the condition in the repo and runs the check for real, so the loop can neither self-clear on turn 1 nor chase a proof that never lands. Nothing to do with the root `GOAL.md` despite the name |
 
 **Commands** (entrypoints — orchestration only, per the component taxonomy):
 
